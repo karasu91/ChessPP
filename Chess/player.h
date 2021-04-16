@@ -4,31 +4,29 @@
 
 using namespace std;
 
-class chessBoard;
+class chessBoardManager;
 
-class player
+class Player
 {
 public:
-	player(int);
-	~player();
+	Player(int);
+	~Player();
 	void addPiece(Piece*);
 	int getColor(void);
 	void initPieces(int);
 	void printPieces(void);
-	void makeMove(chessBoard*, player*);
-	void validMovesTotal(vector<string>);
-	void addMoves(vector<string>);
+	void makeMove(chessBoardManager*, Player*);
 	vector<string> getMoves(void);
 	vector<Piece*> getPieces(void);
-	void setThreatMoves(chessBoard*);
-	vector<string> getThreatMoves(void);
-	void setChecked(bool, chessBoard*, player*);
-	void checkGame(player*, player*, chessBoard*);
+	void setChecked(bool);
+	bool getChecked();
+	void checkGame(chessBoardManager*);
+	void setOpponent(Player*);
+	Player* getOpponent();
 private:
 	int color;
-	vector<string> validMoves;
-	vector<string> threatMoves;
 	vector<Piece*> pieces;
+	Player* opponent = NULL;
 	bool checked;
 };
 

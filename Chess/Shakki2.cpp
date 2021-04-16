@@ -39,10 +39,10 @@ void initGame(void)
 	¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 	*/
 
-	chessBoard* board = new chessBoard;
+	chessBoardManager* board = new chessBoardManager;
 
-	player* whiteP = new player(WHITE);
-	player* blackP = new player(BLACK);
+	Player* whiteP = new Player(WHITE);
+	Player* blackP = new Player(BLACK);
 
 	whiteP->initPieces(WHITE);
 	blackP->initPieces(BLACK);

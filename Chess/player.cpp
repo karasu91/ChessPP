@@ -7,14 +7,14 @@
 
 using namespace std;
 
-player::player(int col)
+Player::Player(int col)
 {
 	this->color = col;
 }
 
-void player::initPieces(int color)
+void Player::initPieces(int color)
 {
-	validMoves.clear();
+
 	if (color == WHITE) {
 		/* Pawns */
 		addPiece(new Piece(WHITE, PAWN));
@@ -59,60 +59,68 @@ void player::initPieces(int color)
 	}	
 }
 
-vector<Piece*> player::getPieces(void) {
+vector<Piece*> Player::getPieces(void) {
 	return pieces;
 }
 
-player::~player()
+Player::~Player()
 {
 }
 
-void player::addPiece(Piece* piece)
+void Player::addPiece(Piece* piece)
 {
 	pieces.push_back(piece);	
 }
 
-void player::printPieces(void)
+void Player::printPieces(void)
 {
 	for (int i = 0; i < (int)pieces.size(); i++) {
 		cout << getPieces()[i]->getColor() << " " << getPieces()[i]->getType() << endl;
 	}
 }
 
-vector<string> player::getMoves(void)
-{
-	return validMoves;
+
+void Player::checkGame(chessBoardManager* board) {
+
+	vector<Player*> players = board->getPlayers();
+
+	board->recalculatePieceThreats(); // Assigns every threat into all pieces on the board
+
+	for(int i = 0; i < players.size(); i++)
+		board->updatePlayerCheckedStatus(players[i]);	
 }
 
-void player::setChecked(bool state, chessBoard* b, player* e)
-{
-	bool check = state;
-	if (this->checked == false && check == true) {
-		cout << this->getColor() << " is checked!" << endl; cin.ignore();
-		checked = check;
-		b->checkForMate(this, e);
-		return;
-	}
-	else if (this->checked == true && check == false)
-		cout << this->getColor() << " not checked anymore!" << endl; cin.ignore();
-		checked = check;
+bool Player::getChecked() {
+	return checked;
 }
 
-vector<string> player::getThreatMoves(void) 
-{
-	return threatMoves;
+void Player::setChecked(bool newCheck) {
+
+	if(checked == false && newCheck == true) {
+		cout << color << " is checked!" << endl; cin.ignore();
+	} 
+	else if(checked == true && newCheck == false)
+		cout << color << " not checked anymore!" << endl; cin.ignore();
+
+	checked = newCheck;
 }
 
-void player::checkGame(player* p, player* e, chessBoard* board) 
+void Player::setOpponent(Player* p) 
 {
-	board->createThreatVector(); // Assigns every threat into all pieces on the board
-	board->checkCheck(p, e);
+	if(p != this)
+		opponent = p;
+	else
+		cout << "Cant set myself as an opponent!" << endl;
 }
 
-void player::makeMove(chessBoard* board, player* enemy)
+Player* Player::getOpponent() 
+{
+	return opponent;
+}
+
+void Player::makeMove(chessBoardManager* board, Player* enemy)
 {	
-	checkGame(this, enemy, board);
-	checkGame(enemy, this, board);
+	checkGame(board);
 
 	string unitCoordinates;
 	string target;
@@ -130,17 +138,18 @@ void player::makeMove(chessBoard* board, player* enemy)
 		cout << this->color << ": choose unit (row, column): "; 
 		cin >> unitCoordinates;		
 
-		int unitrow = board->returnRow(unitCoordinates);
-		int unitcol = board->returnCol(unitCoordinates);		
+		int row = board->returnRow(unitCoordinates);
+		int col = board->returnCol(unitCoordinates);		
 
-		Piece* tempPiece = board->getPiece(unitrow, unitcol);
+		Piece* tempPiece = board->getPiece(row, col);
 
 		// Check if the choices are INSIDE the board area, static 8x8 board
-		if (unitrow >= 0 && unitrow <= 7 && unitcol >= 0 && unitrow <= 7) {
+		if (row >= 0 && row <= 7 && col >= 0 && row <= 7) {
 			// If the targeted piece matches the player's color
-			if (board->getPiece(unitrow, unitcol)->getColor() == this->color) {	
+			if (board->getPiece(row, col)->getColor() == this->color) {	
 				// Check for valid moves here
-				availableMoves = board->validMoves(tempPiece, unitCoordinates);
+				availableMoves = board->calculateAvailableMoves(tempPiece, unitCoordinates);
+				tempPiece->setAvailableMoves(availableMoves);
 			}
 			else {
 				cout << "Faulty choice, try again!" << endl;
@@ -167,7 +176,7 @@ void player::makeMove(chessBoard* board, player* enemy)
 					// Check if the targeted tile is in available moves. If yes -> move
 					for (unsigned i = 0; i < availableMoves.size(); i++) {
 						if (targetTile == availableMoves[i]) {							
-							board->setPiece(tempPiece, unitrow, unitcol, targetrow, targetcol);								
+							board->setPiece(tempPiece, row, col, targetrow, targetcol);								
 							board->printBoard();
 							tempPiece->setMoved(YES);
 							movePass = true;
@@ -190,26 +199,13 @@ void player::makeMove(chessBoard* board, player* enemy)
 			cout << "Cannot move this piece!" << endl;
 		}
 		// Calculate all possible moves for this player this turn
-		// New round -> nullify availableMoves	
-		this->validMoves.clear();
-		board->addAllPossibleMoves(this);		
-		checkGame(enemy, this, board);
-		checkGame(this, enemy, board);		
+		board->calculateAllPossibleMoves(this);		
+		checkGame(board);
+		//checkGame(board);		
 	}
 }
 
-void player::validMovesTotal(vector<string> moves) 
-{
-	validMoves.clear();
-	validMoves = moves;
-}
-
-int player::getColor(void)
+int Player::getColor(void)
 {
 	return color;
-}
-
-void player::addMoves(vector<string> moves)
-{
-	validMoves.insert(validMoves.end(), moves.begin(), moves.end());
 }

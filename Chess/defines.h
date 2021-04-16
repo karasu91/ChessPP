@@ -13,7 +13,7 @@
 #define H 7
 
  // Types
-#define FREE 0
+#define EMPTYTILE 0
 #define PAWN 1
 #define ROOK 2
 #define HORSE 3

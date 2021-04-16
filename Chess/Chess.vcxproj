@@ -111,7 +111,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="chessBoard.cpp" />
+    <ClCompile Include="chessBoardManager.cpp" />
     <ClCompile Include="Piece.cpp" />
     <ClCompile Include="player.cpp" />
     <ClCompile Include="Shakki2.cpp" />

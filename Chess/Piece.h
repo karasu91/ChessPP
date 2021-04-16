@@ -12,13 +12,18 @@ class Piece
   int getType(void);
   int isMoved(void);
   void setMoved(int);
-  void addThreatVect(int);
+  void addThreat(Piece*);
   void resetThreatVector(void);
-  vector<int> getThreatVect(void);
- private:
-  vector<int> threat;
+  void setAvailableMoves(vector<string>);
+  void clearAvailableMoves();
+  vector<string> getAvailableMoves();
+  string toString(void);
+  vector<Piece*> getThreatVector(void);
+ private:	 
+  vector<Piece*> threats;
+  vector<string> availableMoves;
   int color;
   int type;
-  int moved;
+  int hasMoved;
 };
 

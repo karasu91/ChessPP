@@ -39,6 +39,7 @@ void initGame(void)
 	¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 	*/
 
+
 	chessBoardManager* board = new chessBoardManager;
 
 	Player* whiteP = new Player(WHITE);

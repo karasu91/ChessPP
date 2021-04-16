@@ -350,8 +350,7 @@ void chessBoardManager::recalculatePieceThreats(void)
 						if (board[row - k][col + k]->getType() == EMPTYTILE) {
 							board[row - k][col + k]->addThreat(piece);
 						}
-						else {
-							cout << "debug row: " << row-k << " col: " << col+k << endl;
+						else {							
 							board[row - k][col + k]->addThreat(piece);
 							break;
 						}

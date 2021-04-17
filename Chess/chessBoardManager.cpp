@@ -109,6 +109,18 @@ void upgradePawnCheck(Piece* pawn)
 	}
 }
 
+void chessBoardManager::updateGameState() {
+	vector<Player*> players = getPlayers();
+
+	// Assigns every threat into all pieces on the board	
+	recalculatePieceThreats();
+
+	for(int i = 0; i < players.size(); i++)
+	{
+		updatePlayerCheckedStatus(players[i]);
+	}
+}
+
 void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool simulate) {
 	if(!simulate)
 	{
@@ -1548,7 +1560,6 @@ string columnToBoardInt(int col) {
 }
 
 
-bool cls = true;
 void chessBoardManager::printBoard(Board* board, bool simulation) {
 	/* Function for printing the game board every turn */
 	int simuColor = 3;

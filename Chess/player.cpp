@@ -107,17 +107,7 @@ string Player::toString() {
 }
 
 
-void chessBoardManager::updateGameState() {
-	vector<Player*> players = getPlayers();
 
-	// Assigns every threat into all pieces on the board	
-	recalculatePieceThreats();
-
-	for(int i = 0; i < players.size(); i++)
-	{
-		updatePlayerCheckedStatus(players[i]);
-	}
-}
 
 bool Player::isChecked() {
 	return _checked;

@@ -109,7 +109,8 @@ void upgradePawnCheck(Piece* pawn)
 	}
 }
 
-void chessBoardManager::updateGameState() {
+void chessBoardManager::updateGameState() 
+{
 	vector<Player*> players = getPlayers();
 
 	// Assigns every threat into all pieces on the board	

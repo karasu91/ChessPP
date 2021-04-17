@@ -14,6 +14,17 @@ using namespace std;
 
 void initGame(void);
 
+class ActivePlayers {
+public:
+	ActivePlayers();
+	~ActivePlayers();
+	Player* currentPlayer;
+	void swapTurn() {
+		currentPlayer = currentPlayer->getOpponent();
+	}
+};
+
+
 int main()
 {
 	initGame();	
@@ -40,22 +51,50 @@ void initGame(void)
 	*/
 
 	 
-	chessBoardManager* board = new chessBoardManager;
+	chessBoardManager* boardManager = new chessBoardManager();
+	ActivePlayers* activePlayers = new ActivePlayers();
+	
+	auto gameBoard = boardManager->getBoard();
 
 	Player* whiteP = new Player(WHITE);
 	Player* blackP = new Player(BLACK);
+	whiteP->setOpponent(blackP);
+	blackP->setOpponent(whiteP);
+
+	activePlayers->currentPlayer = whiteP;
 
 	whiteP->initPieces(WHITE);
 	blackP->initPieces(BLACK);
 	//cout << board[
-	board->initBoard(whiteP);
-	board->initBoard(blackP);
+	boardManager->initBoard(whiteP);
+	boardManager->initBoard(blackP);
+	boardManager->printBoard(gameBoard);	
 
-	board->printBoard();
+	// initial moves
+	boardManager->playMove(activePlayers->currentPlayer, "G5", "E5");
+	activePlayers->swapTurn();
+
+	boardManager->playMove(activePlayers->currentPlayer, "B4", "D4");
+	activePlayers->swapTurn();
+
+	string startCoordinates;
+	string finalCoordinates;
 
 	// Start game
-	while (!gameOver) {			
-		whiteP->makeMove(board, blackP);
-		blackP->makeMove(board, whiteP);		
+
+
+	while (!gameOver) {		
+		cout << activePlayers->currentPlayer->toString() << ": Select piece: ";
+		cin >> startCoordinates;
+		cout << activePlayers->currentPlayer->toString() << ": Select target: ";
+		cin >> finalCoordinates;
+		boardManager->playMove(activePlayers->currentPlayer, startCoordinates, finalCoordinates);
+		activePlayers->swapTurn();
 	}
+}
+
+ActivePlayers::ActivePlayers() {
+}
+
+ActivePlayers::~ActivePlayers() {
 }

@@ -14,8 +14,8 @@ public:
 	void addPiece(Piece*);
 	int getColor(void);
 	void initPieces(int);
-	void printPieces(void);
-	void makeMove(chessBoardManager*, Player*);
+	void printPieces(void);	
+	string toString();
 	vector<string> getMoves(void);
 	vector<Piece*> getPieces(void);
 	void setChecked(bool);
@@ -24,10 +24,10 @@ public:
 	void setOpponent(Player*);
 	Player* getOpponent();
 private:
-	int color;
+	int color = 0;
 	vector<Piece*> pieces;
 	Player* opponent = NULL;
-	bool checked;
+	bool checked = false;
 };
 
 

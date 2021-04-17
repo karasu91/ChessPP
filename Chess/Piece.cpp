@@ -3,46 +3,64 @@
 
 using namespace std;
 
-Piece::Piece(int col, int typ)
+Piece::Piece(int col, int typ, int row, int column)
 {
-	color = col;
-	type = typ;
-	threats.clear();
-	hasMoved = 0;
+	_color = col;
+	_type = typ;
+	_threats.clear();
+	_hasMoved = 0;
+	_coords = * new coordinates;
+	_coords.x = row;
+	_coords.y = column;
 }
+
+Piece::~Piece() {
+	cout << "deleting Piece: " << this->toString() << " at " << getCoordinates().toString() << endl;
+}
+
 
 int Piece::getColor(void)
 {
-	return color;
+	return _color;
 }
 
 vector<Piece*> Piece::getThreatVector(void)
 {
-	return threats;
+	return _threats;
+}
+
+coordinates Piece::getCoordinates() {
+	return _coords;
+}
+
+void Piece::setCoordinates(coordinates coords) {
+	cout << "Setting new coordinates..." << endl;
+	_coords.x = coords.x;
+	_coords.y = coords.y;
 }
 
 void Piece::resetThreatVector(void)
 {
-	this->threats.clear();
+	this->_threats.clear();
 }
 
 void Piece::setAvailableMoves(vector<string> moves) {
-	availableMoves = moves;
+	_availableMoves = moves;
 }
 
 void Piece::clearAvailableMoves() {
-	availableMoves.clear();
+	_availableMoves.clear();
 }
 
 vector<string> Piece::getAvailableMoves() {
-	return availableMoves;
+	return _availableMoves;
 }
 
 
 string numToPiece(int num) {
 	string piece;
 	if(num == 0) {
-		piece = "-";
+		piece = "EMPTY";
 	}
 	if(num == 1) {
 		piece = "P";
@@ -81,12 +99,12 @@ void Piece::addThreat(Piece* piece)
 
 
 	// Check if threats array already contains the piece
-	if(std::find(threats.begin(), threats.end(), piece) != threats.end()) {
+	if(std::find(_threats.begin(), _threats.end(), piece) != _threats.end()) {
 		// Element in vector.
 	}
 	else
 	{
-		threats.push_back(piece);
+		_threats.push_back(piece);
 		if(this->getType() == KING) {
 			cout << "Check!" << endl;
 			string msg = this->toString() + " is threatened by " + piece->toString();
@@ -95,22 +113,19 @@ void Piece::addThreat(Piece* piece)
 	}
 }
 
-Piece::~Piece()
-{
 
-}
 
 int Piece::getType(void)
 {
-	return type;
+	return _type;
 }
 
-int Piece::isMoved(void) {
-	return hasMoved;
+bool Piece::isMoved(void) {
+	return _hasMoved;
 }
 
-void Piece::setMoved(int state) {
-	hasMoved = state;
+void Piece::setMoved(bool state) {
+	_hasMoved = state;
 }
 
 

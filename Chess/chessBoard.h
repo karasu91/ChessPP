@@ -4,6 +4,9 @@
 
 using namespace std;
 
+typedef Piece* Row;
+typedef Row* Board;
+
 class chessBoardManager
 {
 public:
@@ -15,20 +18,23 @@ public:
 	string returnColC(int);
 	string numToPiece(int);	
 	void initBoard(Player*);
-	void printBoard(void);
-	void setPiece(Piece*, int, int, int, int);
+	void printBoard(Piece***);
+	void setPieceTo(Piece*, coordinates);
 	void updatePlayerCheckedStatus(Player*);
 	void calculateAllPossibleMoves(Player*);  // Check every possible player's move
 	void checkForMate(Player*);
 	void recalculatePieceThreats(void);
 	void updatePlayerChecked(Player*, bool);
+	bool tryMove(Piece* piece, string target);
+	bool playMove(Player*, string, string);
+
 	Piece* getPiece(int, int);
-	Piece* getBoard(void);
-	vector<string> calculateAvailableMoves(Piece*, string);
+	Piece*** getBoard(void);
+	vector<string> calculateAvailableMoves(Piece*);
 	void addPlayer(Player*);
 	vector<Player*> getPlayers();
 private:	
-	Piece* board[8][8];
-	vector<Player*> players;
+	Board* _board;
+	vector<Player*> _players;
 };
 

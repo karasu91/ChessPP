@@ -65,6 +65,21 @@ vector<Piece*> Player::getPieces(void) {
 	return pieces;
 }
 
+void Player::copyPieces(vector<Piece*> newPieces) {
+
+	pieces.clear();
+	for(int i = 0; i < newPieces.size(); i++)
+	{
+		Piece* newPiece = new Piece(
+			newPieces[i]->getColor(),
+			newPieces[i]->getType(),
+			newPieces[i]->getCoordinates().x,
+			newPieces[i]->getCoordinates().y);
+
+		pieces.push_back(newPiece);
+	}	
+}
+
 Player::~Player()
 {
 }
@@ -94,31 +109,30 @@ string Player::toString() {
 }
 
 
-void Player::checkGame(chessBoardManager* board) {
+void chessBoardManager::updateGameState() {
+	vector<Player*> players = getPlayers();
 
-	vector<Player*> players = board->getPlayers();
-
-	board->recalculatePieceThreats(); // Assigns every threat into all pieces on the board	
+	recalculatePieceThreats(); // Assigns every threat into all pieces on the board	
 
 	for(int i = 0; i < players.size(); i++) {
-		board->updatePlayerCheckedStatus(players[i]);
+		updatePlayerCheckedStatus(players[i]);
 	}
 
 }
 
-bool Player::getChecked() {
-	return checked;
+bool Player::isChecked() {
+	return _checked;
 }
 
 void Player::setChecked(bool newCheck) {
 
-	if(checked == false && newCheck == true) {
-		cout << color << " is checked!" << endl; cin.ignore();
+	if(_checked == false && newCheck == true) {
+		cout << this->toString() << " is checked!" << endl;
 	} 
-	else if(checked == true && newCheck == false)
-		cout << color << " not checked anymore!" << endl; cin.ignore();
+	else if(_checked == true && newCheck == false)
+		cout << this->toString() << " not checked anymore!" << endl;
 
-	checked = newCheck;
+	this->_checked = newCheck;
 }
 
 void Player::setOpponent(Player* p) 

@@ -34,7 +34,9 @@ coordinates Piece::getCoordinates() {
 }
 
 void Piece::setCoordinates(coordinates coords) {
+#if DEBUG
 	cout << "Setting new coordinates..." << endl;
+#endif
 	_coords.x = coords.x;
 	_coords.y = coords.y;
 }
@@ -97,7 +99,6 @@ void Piece::addThreat(Piece* piece)
 	if(piece->getColor() == this->getColor()) // friendly pieces do not matter
 		return;
 
-
 	// Check if threats array already contains the piece
 	if(std::find(_threats.begin(), _threats.end(), piece) != _threats.end()) {
 		// Element in vector.
@@ -106,8 +107,8 @@ void Piece::addThreat(Piece* piece)
 	{
 		_threats.push_back(piece);
 		if(this->getType() == KING) {
-			cout << "Check!" << endl;
-			string msg = this->toString() + " is threatened by " + piece->toString();
+
+			string msg = "Check! " + this->toString() + " is threatened by " + piece->toString();
 			cout << msg << endl;
 		}
 	}

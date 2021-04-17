@@ -25,7 +25,6 @@ chessBoardManager::chessBoardManager() {
 		for(int col = 0; col <= 7; col++)
 		{
 			_board[row][col] = new Piece(EMPTYTILE, EMPTYTILE, row, col);
-			cout << "new piece: " << _board[row][col]->toString() << endl;
 		}
 	}
 }
@@ -50,50 +49,36 @@ void chessBoardManager::initBoard(Player* p)
 	}
 }
 
-int chessBoardManager::returnCol(string col)
+extern int charToInt(char c);
 
+int chessBoardManager::returnCol(string col)
 {
-	int column;
-	if (col[1] == '1')
-		column = 0;
-	else if (col[1] == '2')
-		column = 1;
-	else if (col[1] == '3')
-		column = 2;
-	else if (col[1] == '4')
-		column = 3;
-	else if (col[1] == '5')
-		column = 4;
-	else if (col[1] == '6')
-		column = 5;
-	else if (col[1] == '7')
-		column = 6;
-	else if (col[1] == '8')
-		column = 7;
-	return column;
+	int icol = charToInt(col[1]);
+	return icol - 1;
 }
 
 int chessBoardManager::returnRow(string row)
 
 {
-	int rrow = 0;
-	if (row[0] == 'A')
-		rrow = 0;
-	else if (row[0] == 'B')
-		rrow = 1;
-	else if (row[0] == 'C')
-		rrow = 2;
-	else if (row[0] == 'D')
-		rrow = 3;
-	else if (row[0] == 'E')
-		rrow = 4;
-	else if (row[0] == 'F')
-		rrow = 5;
-	else if (row[0] == 'G')
-		rrow = 6;
-	else if (row[0] == 'H')
-		rrow = 7;
-	return rrow;
+	switch(row[0])
+	{
+		case 'A':
+			return 0;
+		case 'B':
+			return 1;
+		case 'C':
+			return 2;
+		case 'D':
+			return 3;
+		case 'E':
+			return 4;
+		case 'F':
+			return 5;
+		case 'G':
+			return 6;
+		case 'H':
+			return 7;
+	}
 }
 
 Piece* chessBoardManager::getPiece(int row, int column)
@@ -101,20 +86,53 @@ Piece* chessBoardManager::getPiece(int row, int column)
 	return _board[row][column];
 }
 
-void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords)
+void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool simulate)
 {
-	//board[endRow][endColumn] = NULL;
-	coordinates startCoordinates = piece->getCoordinates();
-	int startX = startCoordinates.x;
-	int startY = startCoordinates.y;
+	if(!simulate)
+	{
+#if DEBUG
+		cout << "NOT simulating movement!" << endl;
+#endif
+		coordinates startCoordinates = piece->getCoordinates();
+		int startX = startCoordinates.x;
+		int startY = startCoordinates.y;
 
-	piece->setCoordinates(finalCoords);
-	if(_board[finalCoords.x][finalCoords.y]->getType() != EMPTYTILE)
-		delete _board[finalCoords.x][finalCoords.y];
+		piece->setCoordinates(finalCoords);
+		piece->setMoved(true);
 
-	_board[finalCoords.x][finalCoords.y] = piece;	
+		if(_board[finalCoords.x][finalCoords.y]->getType() != EMPTYTILE)
+			delete _board[finalCoords.x][finalCoords.y];
 
-	_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, startX, startY);
+		_board[finalCoords.x][finalCoords.y] = piece;
+		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, startX, startY);
+
+		printBoard(_board, false);
+		updateGameState();
+	}
+	else
+	{
+#if DEBUG
+		cout << "Simulating movement!" << endl;
+#endif
+		coordinates startCoordinates = piece->getCoordinates();
+		Piece * cacheTargetTile = _board[finalCoords.x][finalCoords.y];
+
+		int startX = startCoordinates.x;
+		int startY = startCoordinates.y;
+
+		piece->setCoordinates(finalCoords);
+
+		_board[finalCoords.x][finalCoords.y] = piece;
+		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, startX, startY);
+
+		//printBoard(_board, true);
+		updateGameState();
+
+		_board[startX][startY] = piece;
+		_board[finalCoords.x][finalCoords.y] = cacheTargetTile;
+		piece->setCoordinates(startCoordinates);
+
+	}
 }
 
 void chessBoardManager::recalculatePieceThreats(void)
@@ -441,38 +459,38 @@ void chessBoardManager::recalculatePieceThreats(void)
 }
 
 
-bool chessBoardManager::tryMove(Piece* piece, string target) {
+bool chessBoardManager::tryMove(Piece* piece, string target, bool simulate) {
 	vector<string> availableMoves;
 
-	availableMoves = calculateAvailableMoves(piece);
+	availableMoves = calculateAvailableMovesForPiece(piece);
 
 	if(availableMoves.size() > 0)
 	{
 		int targetRow = returnRow(target);
 		int targetCol = returnCol(target);
 
-		// If targeted tile is withing board limits
+		// If targeted tile is within board limits
 		if(boeq(targetRow, 0, 7) && boeq(targetCol, 0, 7))
 		{
 			// Make string indicator from the targeted tile so we can compare it with available moves
 			string targetTile = to_string(targetRow) += to_string(targetCol);
-
+			
 			// Check if the targeted tile is in available moves. If yes -> move
-			for(unsigned i = 0; i < availableMoves.size(); i++)
+			for(int i = 0; i < availableMoves.size(); i++)
 			{
+#if DEBUG
+				cout << "availableMoves[i]: " << availableMoves[i] << "targetTile: " << targetTile << endl;
+#endif
 				if(availableMoves[i] == targetTile)
 				{
 					coordinates coords;
 					coords.x = targetRow;
 					coords.y = targetCol;
 
-					setPieceTo(piece, coords);
-					printBoard(_board);
-
-					piece->setMoved(true);
+					setPieceTo(piece, coords, simulate);			
 
 					return true;
-				}
+				}				
 			}
 			cout << "Faulty move!" << endl;
 		}
@@ -481,17 +499,16 @@ bool chessBoardManager::tryMove(Piece* piece, string target) {
 		{
 			cout << "Target selection is faulty!, try again! (out of bounds)" << endl;
 		}
-	} 	else
+	} 	
+	else
 	{
 		cout << "Cannot move this piece! (available moves count is 0)" << endl;
 	}
 	return false;
 }
 
-bool chessBoardManager::playMove(Player* player, string startCoord, string targetCoord) {
-
-	// Get player's coordinates
-
+bool chessBoardManager::playMove(Player* player, string startCoord, string targetCoord) 
+{
 	int startrow = returnRow(startCoord);
 	int startColumn = returnCol(startCoord);
 	Piece* tempPiece = getPiece(startrow, startColumn);	
@@ -506,23 +523,61 @@ bool chessBoardManager::playMove(Player* player, string startCoord, string targe
 
 		while(true)
 		{
-			if(tryMove(tempPiece, targetCoord) == true)
+			if(tryMove(tempPiece, targetCoord, false) == true)
+			{
+				if(player->getOpponent()->isChecked() == true)
+				{
+					bool isMate = checkForMate(player->getOpponent());
+					cout << "Mate simulation result: " << isMate << endl;
+					if(isMate == true)
+					{
+						player->isWinner = true;
+						gameOver = true;
+					}
+				}
 				return true;
+			}
 		}
 	}
+	return false;
+}
 
+bool chessBoardManager::simulateMove(Player* player, string startCoord, string targetCoord) 
+{
+	int startrow = returnRow(startCoord);
+	int startColumn = returnCol(startCoord);
+	Piece* tempPiece = getPiece(startrow, startColumn);
+
+	if(tempPiece != NULL)
+	{
+		if(!(tempPiece->getColor() == player->getColor()))
+		{
+			cout << "Selected piece is not valid!" << endl;
+			return false;
+		}
+
+		while(true)
+		{
+			if (tryMove(tempPiece, targetCoord, true) == true)
+			{
+				return true;
+			}
+		}
+	}
 	return false;
 }
 
 
-vector<string> chessBoardManager::calculateAvailableMoves(Piece* piece)
+vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece)
 {
 	/*	This function returns a vector containing every possible
 		move for a chosen piece */
 
 	int row = piece->getCoordinates().x;
 	int col = piece->getCoordinates().y;
-	cout << "calculating available moves for piece " << piece->toString() <<" at " << piece->getCoordinates().toString() << endl;
+#if DEBUG
+	cout << "Calculating available moves for piece " << piece->toString() <<" at " << piece->getCoordinates().toString() << endl;
+#endif
 	int type = piece->getType();
 	int color = piece->getColor();
 
@@ -1182,13 +1237,14 @@ string columnToBoardInt(int col) {
 }
 
 
-void chessBoardManager::printBoard(Board* board)
+void chessBoardManager::printBoard(Board* board, bool simulation)
 {
 	/* Function for printing the game board every turn */
+	int simuColor = 3;
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	system("CLS");
+	//system("CLS");
 	
 	cout << "\n\t\t 1  2  3  4  5  6  7  8" << endl;
 	cout << "\t\t ________________________" << endl;
@@ -1217,7 +1273,10 @@ void chessBoardManager::printBoard(Board* board)
 				}
 				cout << numToPiece(piece->getType()) << piece->getColor() << " ";
 			}
-			SetConsoleTextAttribute(hConsole, 15);
+			if (simulation)
+				SetConsoleTextAttribute(hConsole, 3); // light blue, cyan
+			else
+				SetConsoleTextAttribute(hConsole, 15);
 			if (j == 7)
 				cout << "|   " << rowToBoardChar(i) << endl;
 		}
@@ -1225,56 +1284,78 @@ void chessBoardManager::printBoard(Board* board)
 	cout << "\t\t ------------------------" << endl;
 }
 
-void chessBoardManager::checkForMate(Player* p)
+extern int charToInt(char c);
+
+bool chessBoardManager::checkForMate(Player* realPlayer)
 {
 	// Create a temporary chessboard for simulating all possible moves for next turn
+	cout << "Entering mate simulation.." << endl;
+
 	Piece* king;
+	bool simulationResult = false;
+	bool isChecked = false;
 	auto tempBoard = this->_board;
 
-	vector<Piece*> pieces = p->getPieces();
+	vector<Piece*> pieces = realPlayer->getPieces();
 	for(int i = 0; i < pieces.size(); i++) {
 		if(pieces[i]->getType() == KING) {
 			king = pieces[i];
 		}
 	}
 
-	Piece* piece;
-
-	pieces.clear();
-	vector<vector<string>> moves;
-
-	/* automatically move all of the pieces to their corrersponding available move */
-	// first get cached moves
-	for(int i = 0; i < pieces.size(); i++) {
-		piece = pieces[i];
-		vector<string> availableMoves = piece->getAvailableMoves();
-		pieces.push_back(piece);
-		moves.push_back(availableMoves);
-	}
-
 	cout << "Checking for mate status..." << endl;
-	Piece* simulationBoard[8][8];
-	// now loop every move
-	for(int i = 0; i < 8; i++) {
-		for(int j = 0; j < 8; j++) {
-			auto actualPiece = _board[i][j];
-			Piece* newPiece = new Piece(
-				actualPiece->getColor(), 
-				actualPiece->getType(), 
-				actualPiece->getCoordinates().x, 
-				actualPiece->getCoordinates().y);
-			simulationBoard[i][j] = newPiece;
-		}
+
+	Player* simCurrentPlayer = new Player(realPlayer->getColor());
+	Player* simOpponent = new Player(realPlayer->getOpponent()->getColor());
+
+	simCurrentPlayer->copyPieces(realPlayer->getPieces());
+	simOpponent->copyPieces(realPlayer->getOpponent()->getPieces());
+
+	simCurrentPlayer->setOpponent(simOpponent);
+	simOpponent->setOpponent(simCurrentPlayer);
+
+	chessBoardManager* simBoardMgr = new chessBoardManager();
+	simBoardMgr->addPlayer(simCurrentPlayer);
+	simBoardMgr->addPlayer(simOpponent);
+
+	simBoardMgr->initBoard(simCurrentPlayer);
+	simBoardMgr->initBoard(simOpponent);
+
+	cout << "================ SIMULATION ================ " << endl;
+
+	printBoard(simBoardMgr->getBoard(), true);
+	vector<Piece*> simPieces = simCurrentPlayer->getPieces();
+
+	Board tBoard = *simBoardMgr->getBoard();
+
+	for(int i = 0; i < simPieces.size(); i++)
+	{
+		Piece* pc = simPieces[i];
+		vector<string> moves = simBoardMgr->calculateAvailableMovesForPiece(pc);
+
+		for(int j = 0; j < moves.size(); j++)
+		{
+			coordinates coords = pc->getCoordinates();
+			string startCoords = rowToBoardChar(coords.x) + columnToBoardInt(coords.y);
+			string endCoords = rowToBoardChar(charToInt(moves[j][0])) + columnToBoardInt(charToInt(moves[j][1]));
+
+			if(simBoardMgr->simulateMove(simCurrentPlayer, startCoords, endCoords) == true)
+			{
+				isChecked = simCurrentPlayer->isChecked();
+				if(!isChecked)
+					break;
+			}
+			_board = &tBoard; // reset board state
+		};
+		if (!isChecked)
+			break;
 	}
-
 	
-
+	simulationResult = isChecked;
+	cout << "================ END OF SIMULATION ================ " << endl;
 
 	/* if king is STILL threatened -> mate */
-
-
-
-
+	return simulationResult;
 }
 
 Piece*** chessBoardManager::getBoard(void)
@@ -1310,8 +1391,10 @@ string chessBoardManager::numToPiece(int num)
 }
 
 void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
-	/* REWRITE */
 
+#if DEBUG
+	cout << "Checking if player " << player->toString() << " is checked.." << endl;
+#endif
 	int kingThreatsCount = 0;
 	Piece* friendlyKing = NULL;
 	Player* opponent = player->getOpponent();
@@ -1325,10 +1408,8 @@ void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 			}
 		}
 	}
-
 	if(friendlyKing)
 		kingThreatsCount = friendlyKing->getThreatVector().size();
-
 	player->setChecked(kingThreatsCount > 0);
 }
 
@@ -1398,7 +1479,7 @@ void chessBoardManager::calculateAllPossibleMoves(Player* p)
 				pos = returnRowC(i) += returnColC(j);
 
 				// Get piece's possible movements
-				availableMoves = calculateAvailableMoves(piece);
+				availableMoves = calculateAvailableMovesForPiece(piece);
 				moves.insert(moves.end(), availableMoves.begin(), availableMoves.end());
 				piece->setAvailableMoves(moves);
 			}

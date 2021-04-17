@@ -18,16 +18,17 @@ public:
 	string toString();
 	vector<string> getMoves(void);
 	vector<Piece*> getPieces(void);
+	void copyPieces(vector<Piece*>);
 	void setChecked(bool);
-	bool getChecked();
-	void checkGame(chessBoardManager*);
+	bool isChecked();
 	void setOpponent(Player*);
 	Player* getOpponent();
+	bool isWinner = false;
 private:
 	int color = 0;
 	vector<Piece*> pieces;
 	Player* opponent = NULL;
-	bool checked = false;
+	bool _checked = false;
 };
 
 

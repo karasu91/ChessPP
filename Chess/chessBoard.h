@@ -18,23 +18,27 @@ public:
 	string returnColC(int);
 	string numToPiece(int);	
 	void initBoard(Player*);
-	void printBoard(Piece***);
-	void setPieceTo(Piece*, coordinates);
+	void printBoard(Piece***, bool);
+	void setPieceTo(Piece*, coordinates, bool simulate);
 	void updatePlayerCheckedStatus(Player*);
 	void calculateAllPossibleMoves(Player*);  // Check every possible player's move
-	void checkForMate(Player*);
+	bool checkForMate(Player*);
 	void recalculatePieceThreats(void);
-	void updatePlayerChecked(Player*, bool);
-	bool tryMove(Piece* piece, string target);
+	bool tryMove(Piece* piece, string target, bool simulate);
 	bool playMove(Player*, string, string);
+
+	bool simulateMove(Player* player, string startCoord, string targetCoord);
 
 	Piece* getPiece(int, int);
 	Piece*** getBoard(void);
-	vector<string> calculateAvailableMoves(Piece*);
+	vector<string> calculateAvailableMovesForPiece(Piece*);
 	void addPlayer(Player*);
 	vector<Player*> getPlayers();
-private:	
+	void updateGameState();
+	bool gameOver = false;
+private:		
 	Board* _board;
 	vector<Player*> _players;
+	
 };
 

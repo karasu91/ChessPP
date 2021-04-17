@@ -10,6 +10,9 @@
 #include "chessBoard.h"
 #include "defines.h"
 
+#include <chrono>
+#include <thread>
+
 using namespace std;
 
 void initGame(void);
@@ -60,6 +63,8 @@ void initGame(void)
 	Player* blackP = new Player(BLACK);
 	whiteP->setOpponent(blackP);
 	blackP->setOpponent(whiteP);
+	boardManager->addPlayer(whiteP);
+	boardManager->addPlayer(blackP);
 
 	activePlayers->currentPlayer = whiteP;
 
@@ -68,14 +73,21 @@ void initGame(void)
 	//cout << board[
 	boardManager->initBoard(whiteP);
 	boardManager->initBoard(blackP);
-	boardManager->printBoard(gameBoard);	
+	boardManager->printBoard(gameBoard, false);	
 
+	unsigned sleepforMs = 250;
 	// initial moves
 	boardManager->playMove(activePlayers->currentPlayer, "G5", "E5");
 	activePlayers->swapTurn();
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
 	boardManager->playMove(activePlayers->currentPlayer, "B4", "D4");
 	activePlayers->swapTurn();
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+
+	boardManager->playMove(activePlayers->currentPlayer, "H6", "D2");
+	activePlayers->swapTurn();
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
 	string startCoordinates;
 	string finalCoordinates;
@@ -83,13 +95,14 @@ void initGame(void)
 	// Start game
 
 
-	while (!gameOver) {		
+	while (!boardManager->gameOver) {		
 		cout << activePlayers->currentPlayer->toString() << ": Select piece: ";
 		cin >> startCoordinates;
 		cout << activePlayers->currentPlayer->toString() << ": Select target: ";
 		cin >> finalCoordinates;
-		boardManager->playMove(activePlayers->currentPlayer, startCoordinates, finalCoordinates);
-		activePlayers->swapTurn();
+
+		if (boardManager->playMove(activePlayers->currentPlayer, startCoordinates, finalCoordinates) == true)
+			activePlayers->swapTurn();
 	}
 }
 

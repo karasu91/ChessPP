@@ -21,6 +21,7 @@ public:
 	~Piece();
 	int getColor(void);
 	int getType(void);
+	void setType(int);
 	bool isMoved(void);
 	void setMoved(bool);
 	void addThreat(Piece*);

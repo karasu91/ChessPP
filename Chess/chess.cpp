@@ -13,6 +13,8 @@
 #include <chrono>
 #include <thread>
 
+#define DEMO_MODE 1;
+
 using namespace std;
 
 void initGame(void);
@@ -21,27 +23,25 @@ class ActivePlayers {
 public:
 	ActivePlayers();
 	~ActivePlayers();
-	Player* currentPlayer;
+	Player* currentPlayer = NULL;
 	void swapTurn() {
 		currentPlayer = currentPlayer->getOpponent();
 	}
 };
 
 
-int main()
-{
-	initGame();	
-  	return 0;
+int main() {
+	initGame();
+	return 0;
 }
 
-void initGame(void)
-{
+void initGame(void) {
 	int gameOver = 0;
 
 	/*
 	  1 2 3 4 5 6 7 8
 	  _____________
-	
+
 	|R H B K Q B H R|	A	B
 	|P P P P P P P P|	B	B
 	|0 0 0 0 0 0 0 0|	C
@@ -53,41 +53,49 @@ void initGame(void)
 	¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
 	*/
 
-	 
+
 	chessBoardManager* boardManager = new chessBoardManager();
 	ActivePlayers* activePlayers = new ActivePlayers();
-	
+
 	auto gameBoard = boardManager->getBoard();
 
 	Player* whiteP = new Player(WHITE);
 	Player* blackP = new Player(BLACK);
+
 	whiteP->setOpponent(blackP);
 	blackP->setOpponent(whiteP);
+
 	boardManager->addPlayer(whiteP);
 	boardManager->addPlayer(blackP);
 
-	activePlayers->currentPlayer = whiteP;
-
 	whiteP->initPieces(WHITE);
 	blackP->initPieces(BLACK);
-	//cout << board[
 	boardManager->initBoard(whiteP);
 	boardManager->initBoard(blackP);
-	boardManager->printBoard(gameBoard, false);	
 
-	unsigned sleepforMs = 250;
+	boardManager->printBoard(gameBoard, false);
+
+	// Starting player is white
+	activePlayers->currentPlayer = whiteP;
+
+	unsigned sleepforMs = 750;
 	// initial moves
-	boardManager->playMove(activePlayers->currentPlayer, "G5", "E5");
-	activePlayers->swapTurn();
+	if(boardManager->playMove(activePlayers->currentPlayer, "G6", "F6") == true)
+		activePlayers->swapTurn();
 	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
-	boardManager->playMove(activePlayers->currentPlayer, "B4", "D4");
-	activePlayers->swapTurn();
+	if(boardManager->playMove(activePlayers->currentPlayer, "B5", "D5") == true)
+		activePlayers->swapTurn();
 	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
-	boardManager->playMove(activePlayers->currentPlayer, "H6", "D2");
-	activePlayers->swapTurn();
+	if(boardManager->playMove(activePlayers->currentPlayer, "G7", "E7") == true)
+		activePlayers->swapTurn();
 	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+
+	if(boardManager->playMove(activePlayers->currentPlayer, "A4", "E8") == true)
+		activePlayers->swapTurn();
+
+	//std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
 	string startCoordinates;
 	string finalCoordinates;
@@ -95,15 +103,21 @@ void initGame(void)
 	// Start game
 
 
-	while (!boardManager->gameOver) {		
+	while(!boardManager->gameOver)
+	{
 		cout << activePlayers->currentPlayer->toString() << ": Select piece: ";
 		cin >> startCoordinates;
 		cout << activePlayers->currentPlayer->toString() << ": Select target: ";
 		cin >> finalCoordinates;
 
-		if (boardManager->playMove(activePlayers->currentPlayer, startCoordinates, finalCoordinates) == true)
+		if(boardManager->playMove(activePlayers->currentPlayer, startCoordinates, finalCoordinates) == true)
 			activePlayers->swapTurn();
 	}
+
+	Player* winner = activePlayers->currentPlayer->isWinner ? activePlayers->currentPlayer : activePlayers->currentPlayer->getOpponent();
+
+	cout << "Game over! Winner: " << winner->toString() << "!                             " << endl << endl;
+	cin.ignore();
 }
 
 ActivePlayers::ActivePlayers() {

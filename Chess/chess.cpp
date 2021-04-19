@@ -78,39 +78,54 @@ void initGame(void) {
 	// Starting player is white
 	activePlayers->currentPlayer = whiteP;
 
+	cout << "TEST: " << endl;
+	int val1 = 5;
+	int val2 = 5;
+
+	cout << "converting_column " << val2 << " results in " << convertColumnIndexToChar(val2) << endl;
+	cout << "converting_row" << val1 << " results in " << convertRowIndexToChar(val1) << endl;
+	
+
+
 	unsigned sleepforMs = 750;
 	// initial moves
-	if(boardManager->playMove(activePlayers->currentPlayer, "G6", "F6") == true)
+	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("F7"), coordinates("F6")) == true)
 		activePlayers->swapTurn();
 	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
-	if(boardManager->playMove(activePlayers->currentPlayer, "B5", "D5") == true)
+	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("E2"), coordinates("E3")) == true)
 		activePlayers->swapTurn();
 	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
-	if(boardManager->playMove(activePlayers->currentPlayer, "G7", "E7") == true)
+	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("G7"), coordinates("G5")) == true)
 		activePlayers->swapTurn();
 	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
-	if(boardManager->playMove(activePlayers->currentPlayer, "A4", "E8") == true)
+	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("F2"), coordinates("F4")) == true)
+		activePlayers->swapTurn();
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+
+	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("B8"), coordinates("C6")) == true)
+		activePlayers->swapTurn();
+	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+
+	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("D1"), coordinates("H5")) == true)
 		activePlayers->swapTurn();
 
 	//std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
 
-	string startCoordinates;
-	string finalCoordinates;
+	string start;
+	string end;
 
 	// Start game
-
-
 	while(!boardManager->gameOver)
 	{
 		cout << activePlayers->currentPlayer->toString() << ": Select piece: ";
-		cin >> startCoordinates;
+		cin >> start;
 		cout << activePlayers->currentPlayer->toString() << ": Select target: ";
-		cin >> finalCoordinates;
+		cin >> end;
 
-		if(boardManager->playMove(activePlayers->currentPlayer, startCoordinates, finalCoordinates) == true)
+		if(boardManager->playMove(activePlayers->currentPlayer, coordinates(start), coordinates(end)) == true)
 			activePlayers->swapTurn();
 	}
 

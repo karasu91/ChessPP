@@ -4,20 +4,64 @@
 #include <vector>
 using namespace std;
 
-extern string rowToBoardChar(int);
-extern string columnToBoardInt(int);
+/* chessBoardManager.cpp */
+extern int convertColumnCharToIndex(string);
+extern int convertRowCharToIndex(string);
+extern string convertColumnIndexToChar(int);
+extern string convertRowIndexToChar(int);
+
+extern int charToInt(char);
 
 struct coordinates {
-	int x = 0;
-	int y = 0;
-	string toString() {
-		return rowToBoardChar(x) + columnToBoardInt(y);
+	string _row = "";
+	string _column = "";
+
+	coordinates() {
+	};
+	coordinates(string str) {
+		_column = str[0];
+		_row = str[1];
+	};
+	coordinates(string col, string r) {
+		_column = col;
+		_row = r;
+	}
+	coordinates(int col, int r) {
+		_column = convertColumnIndexToChar(col);
+		_row = convertRowIndexToChar(r);
+	}
+
+	string toBoardIndices() {
+		return "" + convertColumnCharToIndex(_column) + convertRowCharToIndex(_row);
+	}
+
+	string toCharString() {
+		return "" + _column + _row;
+	}
+
+	int getBoardColumnIndex() 
+	{
+		return convertColumnCharToIndex(_column);
+	}
+
+	int getBoardRowIndex()
+	{
+		return convertRowCharToIndex(_row);
+	}
+	bool operator ==(const coordinates &other) 
+	{
+		return this->_column == other._column && this->_row == other._row;
+	}
+	void operator =(coordinates other)
+	{
+		other._column = this->_column;
+		other._row = this->_row;
 	}
 };
 
 class Piece {
 public:
-	Piece(int, int, int, int);
+	Piece(int, int, coordinates);
 	~Piece();
 	int getColor(void);
 	int getType(void);
@@ -26,16 +70,17 @@ public:
 	void setMoved(bool);
 	void addThreat(Piece*);
 	void resetThreatVector(void);
-	void setAvailableMoves(vector<string>);
+	void setAvailableMoves(vector<coordinates>);
 	void clearAvailableMoves();
-	vector<string> getAvailableMoves();
+	vector<coordinates> getAvailableMoves();
 	string toString(void);
 	vector<Piece*> getThreatVector(void);
 	coordinates getCoordinates();
-	void setCoordinates(coordinates coords);
+	void setCoordinates(const coordinates &coords);
+	void operator =(const Piece &right);
 private:
 	vector<Piece*> _threats;
-	vector<string> _availableMoves;
+	vector<coordinates> _availableMoves;
 	coordinates _coords;
 	int _color = 0;
 	int _type = 0;

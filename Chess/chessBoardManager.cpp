@@ -7,6 +7,7 @@
 
 using namespace std;
 
+extern int charToInt(char c);
 
 // Between or equal 
 bool boeq(int compare, int lhs, int rhs) {
@@ -25,72 +26,100 @@ chessBoardManager::chessBoardManager() {
 	{
 		for(int col = 0; col <= 7; col++)
 		{
-			_board[row][col] = new Piece(EMPTYTILE, EMPTYTILE, row, col);
+			_board[row][col] = new Piece(EMPTYTILE, EMPTYTILE, coordinates(col, row));
 		}
 	}
 }
 
 
 chessBoardManager::~chessBoardManager() {
+	for(int i = 0; i < _players.size(); i++)
+		delete _players[i];
+	_players.clear();
+}
+
+int convertColumnCharToIndex(string column) {
+
+	if(column == "A")
+		return 0;
+	else if(column == "B")
+		return 1;
+	else if(column == "C")
+		return 2;
+	else if(column == "D")
+		return 3;
+	else if(column == "E")
+		return 4;
+	else if(column == "F")
+		return 5;
+	else if(column == "G")
+		return 6;
+	else if(column == "H")
+		return 7;
+	else
+		return 99;
+}
+
+string convertColumnIndexToChar(int index)
+{
+	switch(index)
+	{
+		case 0:
+			return "A";
+		case 1:
+			return "B";
+		case 2:
+			return "C";
+		case 3:
+			return "D";
+		case 4:
+			return "E";
+		case 5:
+			return "F";
+		case 6:
+			return "G";
+		case 7:
+			return "H";
+		default:
+			return "X";
+	}
+}
+
+int convertRowCharToIndex(string row) {
+	return atoi(row.c_str()) - 1;
+}
+
+string convertRowIndexToChar(int row) {
+	return to_string(row + 1);
 }
 
 void chessBoardManager::initBoard(Player* p) {
 	// Initialize the board with players' pieces
 	vector<Piece*> playerPieces = p->getPieces();
 
-	int color;
-	int type;
-
 	for(int i = 0; i < playerPieces.size(); i++)
 	{
 		coordinates coords = playerPieces[i]->getCoordinates();
-		_board[coords.x][coords.y] = playerPieces[i];
+		int row = coords.getBoardRowIndex();
+		int column = coords.getBoardColumnIndex();
+		_board[row][column] = playerPieces[i];
 	}
 }
 
-extern int charToInt(char c);
 
-int chessBoardManager::returnCol(string col) {
-	int icol = charToInt(col[1]);
-	return icol - 1;
-}
-
-int chessBoardManager::returnRow(string row)
-
-{
-	switch(row[0])
-	{
-	case 'A':
-		return 0;
-	case 'B':
-		return 1;
-	case 'C':
-		return 2;
-	case 'D':
-		return 3;
-	case 'E':
-		return 4;
-	case 'F':
-		return 5;
-	case 'G':
-		return 6;
-	case 'H':
-		return 7;
-	}
-}
 
 Piece* chessBoardManager::getPiece(int row, int column) {
 	return _board[row][column];
 }
 
-void upgradePawnCheck(Piece* pawn) 
-{
+void upgradePawnCheck(Piece* pawn) {
 	char selection;
 
-	if((pawn->getColor() == WHITE && pawn->getCoordinates().x == 0) ||
-		(pawn->getColor() == BLACK && pawn->getCoordinates().x == 7))
+	int row = pawn->getCoordinates().getBoardRowIndex();
+	if((pawn->getColor() == WHITE && row == 0) ||
+		(pawn->getColor() == BLACK && row == 7))
 	{
-		cout << "Select piece type [P H B R Q]: " << endl;
+		//cout << "Select piece type [P H B R Q]: " << endl;
 		cin >> selection;
 
 		switch(selection)
@@ -109,8 +138,7 @@ void upgradePawnCheck(Piece* pawn)
 	}
 }
 
-void chessBoardManager::updateGameState() 
-{
+void chessBoardManager::updateGameState() {
 	vector<Player*> players = getPlayers();
 
 	// Assigns every threat into all pieces on the board	
@@ -123,27 +151,32 @@ void chessBoardManager::updateGameState()
 }
 
 void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool simulate) {
+
+	coordinates startCoordinates = piece->getCoordinates();
+	int startX = startCoordinates.getBoardRowIndex();
+	int startY = startCoordinates.getBoardColumnIndex();
+	int endX = finalCoords.getBoardRowIndex();
+	int endY = finalCoords.getBoardColumnIndex();
+
 	if(!simulate)
 	{
 #if _DEBUG
 		cout << "NOT simulating movement!" << endl;
 #endif
-		coordinates startCoordinates = piece->getCoordinates();
-		int startX = startCoordinates.x;
-		int startY = startCoordinates.y;
+
 
 		piece->setCoordinates(finalCoords);
 		piece->setMoved(true);
 
 		// Delete actual piece (that is not empty) board position
-		if(_board[finalCoords.x][finalCoords.y]->getType() != EMPTYTILE)
-			delete _board[finalCoords.x][finalCoords.y];
+		if(_board[endX][endY]->getType() != EMPTYTILE)
+			delete _board[endX][endY];
 
 		// Move piece to the destination
-		_board[finalCoords.x][finalCoords.y] = piece;
+		_board[endX][endY] = piece;
 
 		// Assign empty tile to the piece's starting position now as it is free
-		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, startX, startY);
+		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, coordinates(startX, startY));
 
 		// clear screen once and avoid flicker on frame repeat
 
@@ -155,22 +188,19 @@ void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool s
 #if _DEBUG
 		cout << "Simulating movement!" << endl;
 #endif
-		coordinates startCoordinates = piece->getCoordinates();
-		Piece* cacheTargetTile = _board[finalCoords.x][finalCoords.y];
-
-		int startX = startCoordinates.x;
-		int startY = startCoordinates.y;
+		Piece* cacheTargetTile = _board[endX][endY];
 
 		piece->setCoordinates(finalCoords);
 
-		_board[finalCoords.x][finalCoords.y] = piece;
-		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, startX, startY);
+		_board[endX][endY] = piece;
+		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, coordinates(startX, startY));
 
 		printBoard(_board, true);
 		updateGameState();
 
+		delete _board[startX][startY];
 		_board[startX][startY] = piece;
-		_board[finalCoords.x][finalCoords.y] = cacheTargetTile;
+		_board[endX][endY] = cacheTargetTile;
 		piece->setCoordinates(startCoordinates);
 	}
 }
@@ -585,36 +615,31 @@ void chessBoardManager::recalculatePieceThreats(void) {
 }
 
 
-bool chessBoardManager::tryMove(Piece* piece, string target, bool simulate) {
-	vector<string> availableMoves;
+bool chessBoardManager::tryMove(Piece* piece, coordinates target, bool simulate) {
 
+	vector<coordinates> availableMoves;
 	availableMoves = calculateAvailableMovesForPiece(piece);
 
 	if(availableMoves.size() > 0)
-	{
-		int targetRow = returnRow(target);
-		int targetCol = returnCol(target);
+	{	
+		int targetRow = target.getBoardRowIndex();
+		int targetCol = target.getBoardColumnIndex();
 
 		// If targeted tile is within board limits
 		if(boeq(targetRow, 0, 7) && boeq(targetCol, 0, 7))
 		{
 			// Make string indicator from the targeted tile so we can compare it with available moves
-			string targetTile = to_string(targetRow) += to_string(targetCol);
+			coordinates targetTile = coordinates(targetCol, targetRow);
 
 			// Check if the targeted tile is in available moves. If yes -> move
 			for(int i = 0; i < availableMoves.size(); i++)
 			{
 #if _DEBUG
-				cout << "availableMoves[i]: " << availableMoves[i] << "targetTile: " << targetTile << endl;
+				cout << "availableMoves[i]: " << availableMoves[i].toCharString() << " targetTile: " << targetTile.toCharString() << endl;
 #endif
 				if(availableMoves[i] == targetTile)
-				{
-					coordinates coords;
-					coords.x = targetRow;
-					coords.y = targetCol;
-
-					setPieceTo(piece, coords, simulate);
-
+				{				
+					setPieceTo(piece, coordinates(targetCol, targetRow), simulate);
 					// Upgrade pawn logic
 					if(piece->getType() == PAWN && !simulate)
 						upgradePawnCheck(piece);
@@ -629,7 +654,7 @@ bool chessBoardManager::tryMove(Piece* piece, string target, bool simulate) {
 		{
 			cout << "Target selection is faulty!, try again! (out of bounds)" << endl;
 		}
-}
+	}
 	else
 	{
 		cout << "Cannot move this piece! (available moves count is 0)" << endl;
@@ -637,9 +662,11 @@ bool chessBoardManager::tryMove(Piece* piece, string target, bool simulate) {
 	return false;
 }
 
-bool chessBoardManager::playMove(Player* player, string startCoord, string targetCoord) {
-	int startrow = returnRow(startCoord);
-	int startColumn = returnCol(startCoord);
+bool chessBoardManager::playMove(Player* player, coordinates startCoord, coordinates targetCoord) {
+
+	int startrow = startCoord.getBoardRowIndex();
+	int startColumn = startCoord.getBoardColumnIndex();
+
 	Piece* tempPiece = getPiece(startrow, startColumn);
 
 	if(tempPiece != NULL)
@@ -672,13 +699,13 @@ bool chessBoardManager::playMove(Player* player, string startCoord, string targe
 				return true;
 			}
 		}
-}
+	}
 	return false;
 }
 
-bool chessBoardManager::simulateMove(Player* player, string startCoord, string targetCoord) {
-	int startrow = returnRow(startCoord);
-	int startColumn = returnCol(startCoord);
+bool chessBoardManager::simulateMove(Player* player, coordinates startCoord, coordinates targetCoord) {
+	int startrow = startCoord.getBoardRowIndex();
+	int startColumn = startCoord.getBoardColumnIndex();
 	Piece* tempPiece = getPiece(startrow, startColumn);
 
 	if(tempPiece != NULL)
@@ -701,19 +728,22 @@ bool chessBoardManager::simulateMove(Player* player, string startCoord, string t
 }
 
 
-vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) {
+vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) {
 	/*	This function returns a vector containing every possible
 		move for a chosen piece */
 
-	int row = piece->getCoordinates().x;
-	int col = piece->getCoordinates().y;
+	cout << "DEBUG" << endl;
+	coordinates coords = piece->getCoordinates();
+	int row = coords.getBoardRowIndex();
+	int col = coords.getBoardColumnIndex();
+
 #if _DEBUG
-	cout << "Calculating available moves for piece " << piece->toString() << " at " << piece->getCoordinates().toString() << endl;
+	cout << "Calculating available moves for piece " << piece->toString() << " at " << coords.toCharString() << endl;
 #endif
 	int type = piece->getType();
 	int color = piece->getColor();
 
-	vector<string> validMoves;
+	vector<coordinates> validMoves;
 
 	// Pawn, white
 	if(type == PAWN)
@@ -728,20 +758,20 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 				{
 					if(_board[row - 1][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col));
+						validMoves.push_back(coordinates(col, row - 1));
 					}
 					// If pawn is on a starting position
 					if(piece->isMoved() == false)
 					{
 						if(_board[row - 1][col]->getType() == EMPTYTILE && _board[row - 2][col]->getType() == EMPTYTILE)
 						{
-							validMoves.push_back(to_string(row - 2) += to_string(col));
+							validMoves.push_back(coordinates(col, row - 2));
 						}
 					}
 					// If enemy is on a killable tile
 					if(_board[row - 1][col + 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col + 1));
+						validMoves.push_back(coordinates(col + 1, row - 1));
 					}
 				}
 				else
@@ -755,20 +785,20 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					// Basic one or two moves in front, default situation
 					if(_board[row - 1][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col));
+						validMoves.push_back(coordinates(col, row-1));
 					}
 					// If pawn has not moved before
 					if(piece->isMoved() == false)
 					{
 						if(_board[row - 1][col]->getType() == EMPTYTILE && _board[row - 2][col]->getType() == EMPTYTILE)
 						{
-							validMoves.push_back(to_string(row - 2) += to_string(col));
+							validMoves.push_back(coordinates(col, row-2));
 						}
 					}
 					// If enemy is on a killable FREE
 					if(_board[row - 1][col - 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col - 1));
+						validMoves.push_back(coordinates(col-1, row-1));
 					}
 				}
 				else
@@ -781,23 +811,23 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 				{
 					if(_board[row - 1][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col));
+						validMoves.push_back(coordinates(col, row-1));
 					}
 					if(piece->isMoved() == false)
 					{
 						if(_board[row - 1][col]->getType() == EMPTYTILE && _board[row - 2][col]->getType() == EMPTYTILE)
 						{
-							validMoves.push_back(to_string(row - 2) += to_string(col));
+							validMoves.push_back(coordinates(col, row-2));
 						}
 					}
 					// If enemy is on a killable tile
 					if(_board[row - 1][col - 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col - 1));
+						validMoves.push_back(coordinates(col-1, row-1));
 					}
 					if(_board[row - 1][col + 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(to_string(row - 1) += to_string(col + 1));
+						validMoves.push_back(coordinates(col+1, row-1));
 					}
 				}
 				else
@@ -813,20 +843,20 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 				// Basic one or two moves in front, default situation
 				if(_board[row + 1][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col));
+					validMoves.push_back(coordinates(col, row+1));
 				}
 				// If pawn is on a starting position
 				if(piece->isMoved() == false)
 				{
 					if(_board[row + 1][col]->getType() == EMPTYTILE && _board[row + 2][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(to_string(row + 2) += to_string(col));
+						validMoves.push_back(coordinates(col, row+2));
 					}
 				}
 				// If enemy is on a killable FREE
 				if(_board[row + 1][col + 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col + 1));
+					validMoves.push_back(coordinates(col+1, row+1));
 				}
 			}
 			// If the pawn is on the right side column
@@ -835,20 +865,20 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 				// Basic one or two moves in front, default situation
 				if(_board[row + 1][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col));
+					validMoves.push_back(coordinates(col, row+1));
 				}
 				// If pawn has not moved before
 				if(piece->isMoved() == false)
 				{
 					if(_board[row + 1][col]->getType() == EMPTYTILE && _board[row + 2][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(to_string(row + 2) += to_string(col));
+						validMoves.push_back(coordinates(col, row+2));
 					}
 				}
 				// If enemy is on a killable FREE
 				if(_board[row + 1][col - 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col - 1));
+					validMoves.push_back(coordinates(col-1, row+1));
 				}
 			}
 			// Pawn is not on the side columns
@@ -856,28 +886,28 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + 1][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col));
+					validMoves.push_back(coordinates(col, row+1));
 				}
 				if(piece->isMoved() == false)
 				{
 					if(_board[row + 1][col]->getType() == EMPTYTILE && _board[row + 2][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(to_string(row + 2) += to_string(col));
+						validMoves.push_back(coordinates(col, row+2));
 					}
 				}
 				// If enemy is on a killable FREEs
 				if(_board[row + 1][col - 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col - 1));
+					validMoves.push_back(coordinates(col-1, row+1));
 				}
 				if(_board[row + 1][col + 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(to_string(row + 1) += to_string(col + 1));
+					validMoves.push_back(coordinates(col+1, row+1));
 				}
 			}
 		}
 
-
+		cout << "pawn valid moves size: " << validMoves.size() << endl;
 		// OHESTALYÖNTI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	}
@@ -891,7 +921,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row) += to_string(col - i));
+					validMoves.push_back(coordinates(col-i, row));
 				}
 				else
 				{
@@ -901,7 +931,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row) += to_string(col - i));
+						validMoves.push_back(coordinates(col-i, row));
 						break;
 					}
 				}
@@ -914,7 +944,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row) += to_string(col + i));
+					validMoves.push_back(coordinates(col+i, row));
 				}
 				else
 				{
@@ -924,7 +954,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row) += to_string(col + i));
+						validMoves.push_back(coordinates(col+i, row));
 						break;
 					}
 				}
@@ -937,7 +967,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row - i][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row - i) += to_string(col));
+					validMoves.push_back(coordinates(col, row-i));
 				}
 				else
 				{
@@ -947,7 +977,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row - i) += to_string(col));
+						validMoves.push_back(coordinates(col, row - i));
 						break;
 					}
 				}
@@ -960,7 +990,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + i][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + i) += to_string(col));
+					validMoves.push_back(coordinates(col, row + i));
 				}
 				else
 				{
@@ -970,7 +1000,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row + i) += to_string(col));
+						validMoves.push_back(coordinates(col, row + i));
 						break;
 					}
 				}
@@ -980,13 +1010,15 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 	// Bishop, both colors
 	else if(type == BISHOP)
 	{
+	// Left up diagonal			
 		for(int i = 1; i <= 7; i++)
-			// Left up diagonal					
+		{
+					
 			if(col - i >= 0 && row - i >= 0)
 			{
 				if(_board[row - i][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row - i) += to_string(col - i));
+					validMoves.push_back(coordinates(col - i, row - i));
 				}
 				else
 				{
@@ -996,11 +1028,12 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row - i) += to_string(col - i));
+						validMoves.push_back(coordinates(col - i, row - i));
 						break;
 					}
 				}
 			}
+		}
 		for(int i = 1; i <= 7; i++)
 		{
 			// Right up diagonal		
@@ -1008,7 +1041,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row - i][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row - i) += to_string(col + i));
+					validMoves.push_back(coordinates(col + i, row - i));
 				}
 				else
 				{
@@ -1018,7 +1051,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row - i) += to_string(col + i));
+						validMoves.push_back(coordinates(col + i, row - i));
 						break;
 					}
 				}
@@ -1031,7 +1064,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + i][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + i) += to_string(col + i));
+					validMoves.push_back(coordinates(col + i, row + i));
 				}
 				else
 				{
@@ -1041,7 +1074,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row + i) += to_string(col + i));
+						validMoves.push_back(coordinates(col + i, row + i));
 						break;
 					}
 				}
@@ -1054,7 +1087,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + i][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + i) += to_string(col - i));
+					validMoves.push_back(coordinates(col - i, row + i));
 				}
 				else
 				{
@@ -1064,7 +1097,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row + i) += to_string(col - i));
+						validMoves.push_back(coordinates(col - i, row + i));
 						break;
 					}
 				}
@@ -1079,14 +1112,14 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 		{
 			if(_board[row + 1][col - 2]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row + 1) += to_string(col - 2));
+				validMoves.push_back(coordinates(col - 2, row + 1));
 			}
 		}
 		if(col - 2 >= 0 && row - 1 >= 0)
 		{
 			if(_board[row - 1][col - 2]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row - 1) += to_string(col - 2));
+				validMoves.push_back(coordinates(col - 2, row - 1));
 			}
 		}
 		// Up
@@ -1094,14 +1127,14 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 		{
 			if(_board[row - 2][col - 1]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row - 2) += to_string(col - 1));
+				validMoves.push_back(coordinates(col - 1, row - 2));
 			}
 		}
 		if(col + 1 <= 7 && row - 2 >= 0)
 		{
 			if(_board[row - 2][col + 1]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row - 2) += to_string(col + 1));
+				validMoves.push_back(coordinates(col + 1, row - 2));
 			}
 		}
 		// Right
@@ -1109,14 +1142,14 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 		{
 			if(_board[row - 1][col + 2]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row - 1) += to_string(col + 2));
+				validMoves.push_back(coordinates(col + 2, row - 1));
 			}
 		}
 		if(col + 2 <= 7 && row + 1 <= 7)
 		{
 			if(_board[row + 1][col + 2]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row + 1) += to_string(col + 2));
+				validMoves.push_back(coordinates(col + 2, row + 1));
 			}
 		}
 		// Down
@@ -1124,14 +1157,14 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 		{
 			if(_board[row + 2][col - 1]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row + 2) += to_string(col - 1));
+				validMoves.push_back(coordinates(col - 1, row + 2));
 			}
 		}
 		if(col + 1 <= 7 && row + 2 <= 7)
 		{
 			if(_board[row + 2][col + 1]->getColor() != color)
 			{
-				validMoves.push_back(to_string(row + 2) += to_string(col + 1));
+				validMoves.push_back(coordinates(col + 1, row + 2));
 			}
 		}
 	}
@@ -1146,7 +1179,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row) += to_string(col - i));
+					validMoves.push_back(coordinates(col - i, row));
 				}
 				else
 				{
@@ -1156,7 +1189,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row) += to_string(col - i));
+						validMoves.push_back(coordinates(col - i, row));
 						break;
 					}
 				}
@@ -1169,7 +1202,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row) += to_string(col + i));
+					validMoves.push_back(coordinates(col + i, row));
 				}
 				else
 				{
@@ -1179,7 +1212,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row) += to_string(col + i));
+						validMoves.push_back(coordinates(col + i, row));
 						break;
 					}
 				}
@@ -1192,7 +1225,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row - i][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row - i) += to_string(col));
+					validMoves.push_back(coordinates(col, row - i));
 				}
 				else
 				{
@@ -1202,7 +1235,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row - i) += to_string(col));
+						validMoves.push_back(coordinates(col, row - i));
 						break;
 					}
 				}
@@ -1215,7 +1248,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + i][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + i) += to_string(col));
+					validMoves.push_back(coordinates(col, row + i));
 				}
 				else
 				{
@@ -1225,19 +1258,21 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row + i) += to_string(col));
+						validMoves.push_back(coordinates(col, row + i));
 						break;
 					}
 				}
 			}
 		}
+		// Left up diagonal			
 		for(int i = 1; i <= 7; i++)
-			// Left up diagonal					
+		{
+
 			if(col - i >= 0 && row - i >= 0)
 			{
 				if(_board[row - i][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row - i) += to_string(col - i));
+					validMoves.push_back(coordinates(col - i, row - i));
 				}
 				else
 				{
@@ -1247,11 +1282,12 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row - i) += to_string(col - i));
+						validMoves.push_back(coordinates(col - i, row - i));
 						break;
 					}
 				}
 			}
+		}
 		for(int i = 1; i <= 7; i++)
 		{
 			// Right up diagonal		
@@ -1259,7 +1295,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row - i][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row - i) += to_string(col + i));
+					validMoves.push_back(coordinates(col + i, row - i));
 				}
 				else
 				{
@@ -1269,7 +1305,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row - i) += to_string(col + i));
+						validMoves.push_back(coordinates(col + i, row - i));
 						break;
 					}
 				}
@@ -1282,7 +1318,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + i][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + i) += to_string(col + i));
+					validMoves.push_back(coordinates(col + i, row + i));
 				}
 				else
 				{
@@ -1292,7 +1328,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row + i) += to_string(col + i));
+						validMoves.push_back(coordinates(col + i, row + i));
 						break;
 					}
 				}
@@ -1305,7 +1341,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			{
 				if(_board[row + i][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(to_string(row + i) += to_string(col - i));
+					validMoves.push_back(coordinates(col - i, row + i));
 				}
 				else
 				{
@@ -1315,7 +1351,7 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 					}
 					else
 					{
-						validMoves.push_back(to_string(row + i) += to_string(col - i));
+						validMoves.push_back(coordinates(col - i, row + i));
 						break;
 					}
 				}
@@ -1521,6 +1557,11 @@ vector<string> chessBoardManager::calculateAvailableMovesForPiece(Piece* piece) 
 			}
 		}
 	}
+
+	for(coordinates coord : validMoves)
+	{
+		cout << "new available move: " << coord.toCharString() << endl;
+	}
 	return validMoves;
 }
 
@@ -1532,49 +1573,22 @@ vector<Player*> chessBoardManager::getPlayers() {
 	return _players;
 }
 
-string rowToBoardChar(int row) {
-	switch(row)
-	{
-	case 0:
-		return "A";
-	case 1:
-		return "B";
-	case 2:
-		return "C";
-	case 3:
-		return "D";
-	case 4:
-		return "E";
-	case 5:
-		return "F";
-	case 6:
-		return "G";
-	case 7:
-		return "H";
-	default:
-		return "?";
-	}
-}
-
-string columnToBoardInt(int col) {
-	return to_string(col + 1);
-}
-
 
 void chessBoardManager::printBoard(Board* board, bool simulation) {
 	/* Function for printing the game board every turn */
 	int simuColor = 3;
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
+
 	COORD coord;
 	coord.X = 0;
 	coord.Y = 0;
 	SetConsoleCursorPosition(hConsole, coord);
-
+	//system("CLS");
 	if(simulation)
 		SetConsoleTextAttribute(hConsole, 3);
 
-	cout << "\n\t\t  1  2  3  4  5  6  7  8" << endl;
+	cout << "\n\t\t  A  B  C  D  E  F  G  H" << endl;
 	int TILE_COLOR;
 
 	int COLOR_BLACK = 16;
@@ -1590,12 +1604,12 @@ void chessBoardManager::printBoard(Board* board, bool simulation) {
 		{
 			Piece* piece = board[i][j];
 
-			if((j + i) % 2 == 0) 
-				TILE_COLOR = BACKGROUND_BLUE;			
+			if((j + i + 1) % 2 == 0)
+				TILE_COLOR = BACKGROUND_BLUE;
 			else
 				TILE_COLOR = BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 
-			
+
 			if(j == 0)
 				cout << "\t\t ";
 			if(piece->getType() == EMPTYTILE)
@@ -1616,14 +1630,14 @@ void chessBoardManager::printBoard(Board* board, bool simulation) {
 				default:
 					SetConsoleTextAttribute(hConsole, COLOR_BLACK | TILE_COLOR);
 				}
-				cout << " " <<  numToPiece(piece->getType()) << /* piece->getColor() */  " ";
+				cout << " " << numToPiece(piece->getType()) << /* piece->getColor() */  " ";
 			}
 			if(simulation)
 				SetConsoleTextAttribute(hConsole, 3); // light blue, cyan
 			else
 				SetConsoleTextAttribute(hConsole, 15);
 			if(j == 7)
-				cout << " " << rowToBoardChar(i) << endl;
+				cout << " " << i + 1 << endl;
 		}
 	}
 	cout << endl;
@@ -1675,13 +1689,13 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 	for(int i = 0; i < simPieces.size(); i++)
 	{
 		Piece* pc = simPieces[i];
-		vector<string> moves = simBoardMgr->calculateAvailableMovesForPiece(pc);
+		vector<coordinates> moves = simBoardMgr->calculateAvailableMovesForPiece(pc);
 
 		for(int j = 0; j < moves.size(); j++)
 		{
 			coordinates coords = pc->getCoordinates();
-			string startCoords = rowToBoardChar(coords.x) + columnToBoardInt(coords.y);
-			string endCoords = rowToBoardChar(charToInt(moves[j][0])) + columnToBoardInt(charToInt(moves[j][1]));
+			coordinates startCoords = coords;
+			coordinates endCoords = moves[j];
 
 			if(simBoardMgr->simulateMove(simCurrentPlayer, startCoords, endCoords) == true)
 			{
@@ -1689,7 +1703,7 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 				if(!isChecked) // game is not checkmate -> we can return
 					break;
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+			std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
 		};
 		if(!isChecked)
@@ -1701,10 +1715,11 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 	cout << "================ END OF SIMULATION ================ " << endl;
 
 	/* if king is STILL threatened -> mate */
+
 	return simulationResult;
 }
 
-Piece*** chessBoardManager::getBoard(void) {
+Board* chessBoardManager::getBoard(void) {
 	return _board;
 }
 
@@ -1739,7 +1754,7 @@ string chessBoardManager::numToPiece(int num) {
 		piece = (char)233; // king
 	}
 	return piece;
-	}
+}
 
 void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 
@@ -1763,58 +1778,12 @@ void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 	player->setChecked(kingThreatsCount > 0);
 }
 
-string chessBoardManager::returnRowC(int row) {
-	string rrow;
-
-	if(row == 0)
-		rrow = 'A';
-	else if(row == 1)
-		rrow = 'B';
-	else if(row == 2)
-		rrow = 'C';
-	else if(row == 3)
-		rrow = 'D';
-	else if(row == 4)
-		rrow = 'E';
-	else if(row == 5)
-		rrow = 'F';
-	else if(row == 6)
-		rrow = 'G';
-	else if(row == 7)
-		rrow = 'H';
-
-	return rrow;
-}
-
-string chessBoardManager::returnColC(int col) {
-	string column;
-
-	if(col == 0)
-		column = '1';
-	else if(col == 1)
-		column = '2';
-	else if(col == 2)
-		column = '3';
-	else if(col == 3)
-		column = '4';
-	else if(col == 4)
-		column = '5';
-	else if(col == 5)
-		column = '6';
-	else if(col == 6)
-		column = '7';
-	else if(col == 7)
-		column = '8';
-
-	return column;
-
-}
 
 void chessBoardManager::calculateAllPossibleMoves(Player* p) {
 	int color = p->getColor();
-	vector<string> moves;
-	vector<string> availableMoves;
-	string pos;
+	vector<coordinates> moves;
+	vector<coordinates> availableMoves;
+
 	cout << "updating all possible moves for player " << to_string(p->getColor()) << endl;
 	for(int i = 0; i <= 7; i++)
 	{
@@ -1823,10 +1792,6 @@ void chessBoardManager::calculateAllPossibleMoves(Player* p) {
 			if(_board[i][j]->getColor() == color)
 			{
 				Piece* piece = _board[i][j];
-
-				string col = returnColC(j);
-				string row = returnRowC(i);
-				pos = returnRowC(i) += returnColC(j);
 
 				// Get piece's possible movements
 				availableMoves = calculateAvailableMovesForPiece(piece);

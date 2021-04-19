@@ -3,18 +3,22 @@
 
 using namespace std;
 
-Piece::Piece(int col, int typ, int row, int column) {
+Piece::Piece(int col, int typ, coordinates coords) {
 	_color = col;
 	_type = typ;
 	_hasMoved = 0;
-	_coords = *new coordinates;
-	_coords.x = row;
-	_coords.y = column;
+#if _DEBUG
+	cout << "allocating " << coords.toCharString() << " to piece " << this->toString() << endl;
+#endif
+	_coords._row = coords._row;
+	_coords._column = coords._column;
 }
 
 Piece::~Piece() {
 #if _DEBUG
-	cout << "deleting Piece: " << this->toString() << " at " << getCoordinates().toString() << endl;
+	//cout << "deleting Piece: " << this->toString() << " at " << getCoordinates().toCharString() << endl;
+	//resetThreatVector();
+	//_availableMoves.clear();
 #endif
 }
 
@@ -31,19 +35,31 @@ coordinates Piece::getCoordinates() {
 	return _coords;
 }
 
-void Piece::setCoordinates(coordinates coords) {
+void Piece::setCoordinates(const coordinates &coords) {
 #if _DEBUG
 	cout << "Setting new coordinates..." << endl;
 #endif
-	_coords.x = coords.x;
-	_coords.y = coords.y;
+	_coords._row = coords._row;
+	_coords._column = coords._column;
+}
+
+void Piece::operator=(const Piece& right) {
+	for(int i = 0; i < right._availableMoves.size(); i++)
+		this->_availableMoves.push_back(right._availableMoves[i]);
+	for(int i = 0; i < right._threats.size(); i++)
+		this->_threats.push_back(right._threats[i]);
+	_coords._row = right._coords._row;
+	_coords._column = right._coords._column;
+	_color = right._color;
+	_type = right._type;
+	_hasMoved = right._hasMoved;
 }
 
 void Piece::resetThreatVector(void) {
-	this->_threats.clear();
+	_threats.clear();
 }
 
-void Piece::setAvailableMoves(vector<string> moves) {
+void Piece::setAvailableMoves(vector<coordinates> moves) {
 	_availableMoves = moves;
 }
 
@@ -51,7 +67,7 @@ void Piece::clearAvailableMoves() {
 	_availableMoves.clear();
 }
 
-vector<string> Piece::getAvailableMoves() {
+vector<coordinates> Piece::getAvailableMoves() {
 	return _availableMoves;
 }
 

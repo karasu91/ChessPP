@@ -13,9 +13,10 @@ extern string convertRowIndexToChar(int);
 extern int charToInt(char);
 
 struct coordinates {
+private:
 	string _row = "";
 	string _column = "";
-
+public:
 	coordinates() {
 	};
 	coordinates(string str) {

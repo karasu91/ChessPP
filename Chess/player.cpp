@@ -71,14 +71,11 @@ void Player::copyPieces(vector<Piece*> oldPieces) {
 	for(int i = 0; i < oldPieces.size(); i++)
 	{
 		coordinates oldCoords = oldPieces[i]->getCoordinates();
-		coordinates newCoords;
-		newCoords._row = oldCoords._row;
-		newCoords._column = oldCoords._column;
 		Piece* pieceCopy = new Piece(
 			oldPieces[i]->getColor(),
 			oldPieces[i]->getType(),
-			newCoords);
-		pieceCopy->setCoordinates(newCoords);
+			oldCoords);
+		pieceCopy->setCoordinates(oldCoords);
 		pieceCopy->setMoved(oldPieces[i]->isMoved());
 		pieces.push_back(pieceCopy);
 	}

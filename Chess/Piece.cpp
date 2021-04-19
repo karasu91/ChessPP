@@ -113,14 +113,15 @@ void Piece::addThreat(Piece* piece) {
 	else
 	{
 		this->_threats.push_back(piece);
+#if _DEBUG
 		if(this->getType() == KING)
 		{
-#if _DEBUG
+
 			string msg = "Check! " + this->toString() + " is threatened by " + piece->toString();
 			cout << msg << endl;
 			cout << "KING threat count: " << _threats.size() << endl;
-#endif
 		}
+#endif
 	}
 }
 

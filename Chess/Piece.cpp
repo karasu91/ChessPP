@@ -10,8 +10,7 @@ Piece::Piece(int col, int typ, coordinates coords) {
 #if _DEBUG
 	cout << "allocating " << coords.toCharString() << " to piece " << this->toString() << endl;
 #endif
-	_coords._row = coords._row;
-	_coords._column = coords._column;
+	_coords = coords;
 }
 
 Piece::~Piece() {
@@ -39,8 +38,8 @@ void Piece::setCoordinates(const coordinates &coords) {
 #if _DEBUG
 	cout << "Setting new coordinates..." << endl;
 #endif
-	_coords._row = coords._row;
-	_coords._column = coords._column;
+	_coords = coords;
+
 }
 
 void Piece::operator=(const Piece& right) {
@@ -48,8 +47,7 @@ void Piece::operator=(const Piece& right) {
 		this->_availableMoves.push_back(right._availableMoves[i]);
 	for(int i = 0; i < right._threats.size(); i++)
 		this->_threats.push_back(right._threats[i]);
-	_coords._row = right._coords._row;
-	_coords._column = right._coords._column;
+	_coords = right._coords;
 	_color = right._color;
 	_type = right._type;
 	_hasMoved = right._hasMoved;

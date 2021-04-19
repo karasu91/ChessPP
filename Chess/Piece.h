@@ -52,10 +52,10 @@ struct coordinates {
 	{
 		return this->_column == other._column && this->_row == other._row;
 	}
-	void operator =(coordinates other)
+	void operator =(coordinates src)
 	{
-		other._column = this->_column;
-		other._row = this->_row;
+		this->_column = src._column;
+		this->_row = src._row ;
 	}
 };
 

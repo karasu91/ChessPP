@@ -118,6 +118,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chessBoard.h" />
+    <ClInclude Include="coordinates.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="Piece.h" />
     <ClInclude Include="player.h" />

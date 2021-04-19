@@ -1,23 +1,25 @@
 #include "Piece.h"
 #include "defines.h"
+#include "player.h"
 
 using namespace std;
+
 
 Piece::Piece(int col, int typ, coordinates coords) {
 	_color = col;
 	_type = typ;
 	_hasMoved = 0;
 #if _DEBUG
-	cout << "allocating " << coords.toCharString() << " to piece " << this->toString() << endl;
+	std::cout << "allocating " << coords.toCharString() << " to piece " << this->toString() << endl;
 #endif
 	_coords = coords;
 }
 
 Piece::~Piece() {
+	if (_owner != NULL)
+		_owner->removePiece(this);
 #if _DEBUG
-	//cout << "deleting Piece: " << this->toString() << " at " << getCoordinates().toCharString() << endl;
-	//resetThreatVector();
-	//_availableMoves.clear();
+	//std::cout << "deleting Piece: " << this->toString() << " at " << getCoordinates().toCharString() << endl;
 #endif
 }
 
@@ -36,7 +38,7 @@ coordinates Piece::getCoordinates() {
 
 void Piece::setCoordinates(const coordinates &coords) {
 #if _DEBUG
-	cout << "Setting new coordinates..." << endl;
+	std::cout << "Setting new coordinates..." << endl;
 #endif
 	_coords = coords;
 
@@ -97,7 +99,7 @@ string Piece::toString(void) {
 
 void Piece::addThreat(Piece* piece) {
 	//string msg = piece->getColor() + " type: " + piece->getType();
-	////cout << msg << endl;
+	////std::cout << msg << endl;
 	//msg = "";
 	if(piece->getType() == EMPTYTILE)
 		return;
@@ -118,11 +120,15 @@ void Piece::addThreat(Piece* piece) {
 		{
 
 			string msg = "Check! " + this->toString() + " is threatened by " + piece->toString();
-			cout << msg << endl;
-			cout << "KING threat count: " << _threats.size() << endl;
+			std::cout << msg << endl;
+			std::cout << "KING threat count: " << _threats.size() << endl;
 		}
 #endif
 	}
+}
+
+void Piece::setOwner(Player* p) {
+	_owner = p;
 }
 
 

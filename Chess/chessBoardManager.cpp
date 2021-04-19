@@ -8,6 +8,7 @@
 using namespace std;
 
 extern int charToInt(char c);
+vector<Piece*> removeNonKingableTiles(vector<Piece*> tiles, int color);
 
 // Between or equal 
 bool boeq(int compare, int lhs, int rhs) {
@@ -60,28 +61,27 @@ int convertColumnCharToIndex(string column) {
 		return 99;
 }
 
-string convertColumnIndexToChar(int index)
-{
+string convertColumnIndexToChar(int index) {
 	switch(index)
 	{
-		case 0:
-			return "A";
-		case 1:
-			return "B";
-		case 2:
-			return "C";
-		case 3:
-			return "D";
-		case 4:
-			return "E";
-		case 5:
-			return "F";
-		case 6:
-			return "G";
-		case 7:
-			return "H";
-		default:
-			return "X";
+	case 0:
+		return "A";
+	case 1:
+		return "B";
+	case 2:
+		return "C";
+	case 3:
+		return "D";
+	case 4:
+		return "E";
+	case 5:
+		return "F";
+	case 6:
+		return "G";
+	case 7:
+		return "H";
+	default:
+		return "X";
 	}
 }
 
@@ -119,7 +119,7 @@ void upgradePawnCheck(Piece* pawn) {
 	if((pawn->getColor() == WHITE && row == 0) ||
 		(pawn->getColor() == BLACK && row == 7))
 	{
-		//cout << "Select piece type [P H B R Q]: " << endl;
+		//std::cout << "Select piece type [P H B R Q]: " << endl;
 		cin >> selection;
 
 		switch(selection)
@@ -145,12 +145,10 @@ void chessBoardManager::updateGameState() {
 	recalculatePieceThreats();
 
 	for(int i = 0; i < players.size(); i++)
-	{
 		updatePlayerCheckedStatus(players[i]);
-	}
 }
 
-void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool simulate) {
+void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool simulate, bool updateState) {
 
 	coordinates startCoordinates = piece->getCoordinates();
 	int startX = startCoordinates.getBoardRowIndex();
@@ -161,10 +159,8 @@ void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool s
 	if(!simulate)
 	{
 #if _DEBUG
-		cout << "NOT simulating movement!" << endl;
+		std::cout << "NOT simulating movement!" << endl;
 #endif
-
-
 		piece->setCoordinates(finalCoords);
 		piece->setMoved(true);
 
@@ -177,16 +173,17 @@ void chessBoardManager::setPieceTo(Piece* piece, coordinates finalCoords, bool s
 
 		// Assign empty tile to the piece's starting position now as it is free
 		_board[startX][startY] = new Piece(EMPTYTILE, EMPTYTILE, coordinates(startX, startY));
-
-		// clear screen once and avoid flicker on frame repeat
-
-		printBoard(_board, false);
-		updateGameState();
+		
+		if(updateState)
+		{
+			printBoard(_board, false);
+			updateGameState();
+		}
 	}
 	else
 	{
 #if _DEBUG
-		cout << "Simulating movement!" << endl;
+		std::cout << "Simulating movement!" << endl;
 #endif
 		Piece* cacheTargetTile = _board[endX][endY];
 
@@ -621,7 +618,7 @@ bool chessBoardManager::tryMove(Piece* piece, coordinates target, bool simulate)
 	availableMoves = calculateAvailableMovesForPiece(piece);
 
 	if(availableMoves.size() > 0)
-	{	
+	{
 		int targetRow = target.getBoardRowIndex();
 		int targetCol = target.getBoardColumnIndex();
 
@@ -635,11 +632,38 @@ bool chessBoardManager::tryMove(Piece* piece, coordinates target, bool simulate)
 			for(int i = 0; i < availableMoves.size(); i++)
 			{
 #if _DEBUG
-				cout << "availableMoves[i]: " << availableMoves[i].toCharString() << " targetTile: " << targetTile.toCharString() << endl;
+				std::cout << "availableMoves[i]: " << availableMoves[i].toCharString() << " targetTile: " << targetTile.toCharString() << endl;
 #endif
 				if(availableMoves[i] == targetTile)
-				{				
-					setPieceTo(piece, coordinates(targetCol, targetRow), simulate);
+				{
+					if(piece->getType() != KING) // avoid checking for castling
+						setPieceTo(piece, coordinates(targetCol, targetRow), simulate, true);
+					else
+					{
+						Piece* king = piece;
+						// check if the target coordinates equal coordinates for castling equivalent move
+						if(abs(targetCol - king->getCoordinates().getBoardColumnIndex()) == 2)
+						{
+							std::cout << "Castling..." << endl;
+							// move king
+							setPieceTo(king, coordinates(targetCol, targetRow), simulate, false);
+							// move rook
+							Piece* rook;
+							if(targetCol == 2)
+							{
+								rook = _board[targetRow][0];
+								setPieceTo(rook, coordinates(targetCol + 1, targetRow), simulate, true);
+							}
+							else if(targetCol == 6)
+							{
+								rook = _board[targetRow][7];
+								setPieceTo(rook, coordinates(targetCol - 1, targetRow), simulate, true);
+							}
+						}
+						else
+							setPieceTo(piece, coordinates(targetCol, targetRow), simulate, true);
+					}
+
 					// Upgrade pawn logic
 					if(piece->getType() == PAWN && !simulate)
 						upgradePawnCheck(piece);
@@ -647,17 +671,17 @@ bool chessBoardManager::tryMove(Piece* piece, coordinates target, bool simulate)
 					return true;
 				}
 			}
-			cout << "Faulty move!" << endl;
+			std::cout << "Invalid move!" << endl;
 		}
 		// Else break cycle
 		else
 		{
-			cout << "Target selection is faulty!, try again! (out of bounds)" << endl;
+			std::cout << "Target selection is faulty!, try again! (out of bounds)" << endl;
 		}
 	}
 	else
 	{
-		cout << "Cannot move this piece! (available moves count is 0)" << endl;
+		std::cout << "Cannot move this piece! (available moves count is 0)" << endl;
 	}
 	return false;
 }
@@ -673,7 +697,7 @@ bool chessBoardManager::playMove(Player* player, coordinates startCoord, coordin
 	{
 		if(!(tempPiece->getColor() == player->getColor()))
 		{
-			cout << "Selected piece is not valid!" << endl;
+			std::cout << "Selected piece is not valid!" << endl;
 			return false;
 		}
 
@@ -682,14 +706,14 @@ bool chessBoardManager::playMove(Player* player, coordinates startCoord, coordin
 			if(tryMove(tempPiece, targetCoord, false) == true)
 			{
 #if _DEBUG
-				cout << player->getOpponent()->toString() << " checked? " << player->getOpponent()->isChecked() << endl;
-				cout << player->toString() << " checked? " << player->isChecked() << endl;
+				std::cout << player->getOpponent()->toString() << " checked? " << player->getOpponent()->isChecked() << endl;
+				std::cout << player->toString() << " checked? " << player->isChecked() << endl;
 #endif
 				// Check if checkmate (start simulation process)
 				if(player->getOpponent()->isChecked() == true)
 				{
 					bool isMate = checkForMate(player->getOpponent());
-					cout << "Checkmate simulation result: " << isMate << endl;
+					std::cout << "Checkmate simulation result: " << isMate << endl;
 					if(isMate == true)
 					{
 						player->isWinner = true;
@@ -712,17 +736,11 @@ bool chessBoardManager::simulateMove(Player* player, coordinates startCoord, coo
 	{
 		if(!(tempPiece->getColor() == player->getColor()))
 		{
-			cout << "Selected piece is not valid!" << endl;
+			std::cout << "Selected piece is not valid!" << endl;
 			return false;
 		}
-
-		while(true)
-		{
-			if(tryMove(tempPiece, targetCoord, true) == true)
-			{
-				return true;
-			}
-		}
+		tryMove(tempPiece, targetCoord, true);
+		return true;		
 	}
 	return false;
 }
@@ -732,13 +750,12 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 	/*	This function returns a vector containing every possible
 		move for a chosen piece */
 
-	cout << "DEBUG" << endl;
 	coordinates coords = piece->getCoordinates();
 	int row = coords.getBoardRowIndex();
 	int col = coords.getBoardColumnIndex();
 
 #if _DEBUG
-	cout << "Calculating available moves for piece " << piece->toString() << " at " << coords.toCharString() << endl;
+	std::cout << "Calculating available moves for piece " << piece->toString() << " at " << coords.toCharString() << endl;
 #endif
 	int type = piece->getType();
 	int color = piece->getColor();
@@ -775,7 +792,7 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 					}
 				}
 				else
-					cout << "Cannot move!" << endl;
+					std::cout << "Cannot move!" << endl;
 			}
 			// If the pawn is on the right side column
 			else if(col == 7)
@@ -785,24 +802,24 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 					// Basic one or two moves in front, default situation
 					if(_board[row - 1][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(coordinates(col, row-1));
+						validMoves.push_back(coordinates(col, row - 1));
 					}
 					// If pawn has not moved before
 					if(piece->isMoved() == false)
 					{
 						if(_board[row - 1][col]->getType() == EMPTYTILE && _board[row - 2][col]->getType() == EMPTYTILE)
 						{
-							validMoves.push_back(coordinates(col, row-2));
+							validMoves.push_back(coordinates(col, row - 2));
 						}
 					}
 					// If enemy is on a killable FREE
 					if(_board[row - 1][col - 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(coordinates(col-1, row-1));
+						validMoves.push_back(coordinates(col - 1, row - 1));
 					}
 				}
 				else
-					cout << "Cannot move!" << endl;
+					std::cout << "Cannot move!" << endl;
 			}
 			// Pawn is not on the side columns
 			else
@@ -811,27 +828,27 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 				{
 					if(_board[row - 1][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(coordinates(col, row-1));
+						validMoves.push_back(coordinates(col, row - 1));
 					}
 					if(piece->isMoved() == false)
 					{
 						if(_board[row - 1][col]->getType() == EMPTYTILE && _board[row - 2][col]->getType() == EMPTYTILE)
 						{
-							validMoves.push_back(coordinates(col, row-2));
+							validMoves.push_back(coordinates(col, row - 2));
 						}
 					}
 					// If enemy is on a killable tile
 					if(_board[row - 1][col - 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(coordinates(col-1, row-1));
+						validMoves.push_back(coordinates(col - 1, row - 1));
 					}
 					if(_board[row - 1][col + 1]->getColor() == BLACK)
 					{
-						validMoves.push_back(coordinates(col+1, row-1));
+						validMoves.push_back(coordinates(col + 1, row - 1));
 					}
 				}
 				else
-					cout << "Cannot move!" << endl;
+					std::cout << "Cannot move!" << endl;
 			}
 		}
 		// Black case, pawn
@@ -843,20 +860,20 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 				// Basic one or two moves in front, default situation
 				if(_board[row + 1][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(coordinates(col, row+1));
+					validMoves.push_back(coordinates(col, row + 1));
 				}
 				// If pawn is on a starting position
 				if(piece->isMoved() == false)
 				{
 					if(_board[row + 1][col]->getType() == EMPTYTILE && _board[row + 2][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(coordinates(col, row+2));
+						validMoves.push_back(coordinates(col, row + 2));
 					}
 				}
 				// If enemy is on a killable FREE
 				if(_board[row + 1][col + 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(coordinates(col+1, row+1));
+					validMoves.push_back(coordinates(col + 1, row + 1));
 				}
 			}
 			// If the pawn is on the right side column
@@ -865,20 +882,20 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 				// Basic one or two moves in front, default situation
 				if(_board[row + 1][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(coordinates(col, row+1));
+					validMoves.push_back(coordinates(col, row + 1));
 				}
 				// If pawn has not moved before
 				if(piece->isMoved() == false)
 				{
 					if(_board[row + 1][col]->getType() == EMPTYTILE && _board[row + 2][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(coordinates(col, row+2));
+						validMoves.push_back(coordinates(col, row + 2));
 					}
 				}
 				// If enemy is on a killable FREE
 				if(_board[row + 1][col - 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(coordinates(col-1, row+1));
+					validMoves.push_back(coordinates(col - 1, row + 1));
 				}
 			}
 			// Pawn is not on the side columns
@@ -886,31 +903,32 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 			{
 				if(_board[row + 1][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(coordinates(col, row+1));
+					validMoves.push_back(coordinates(col, row + 1));
 				}
 				if(piece->isMoved() == false)
 				{
 					if(_board[row + 1][col]->getType() == EMPTYTILE && _board[row + 2][col]->getType() == EMPTYTILE)
 					{
-						validMoves.push_back(coordinates(col, row+2));
+						validMoves.push_back(coordinates(col, row + 2));
 					}
 				}
 				// If enemy is on a killable FREEs
 				if(_board[row + 1][col - 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(coordinates(col-1, row+1));
+					validMoves.push_back(coordinates(col - 1, row + 1));
 				}
 				if(_board[row + 1][col + 1]->getColor() == WHITE)
 				{
-					validMoves.push_back(coordinates(col+1, row+1));
+					validMoves.push_back(coordinates(col + 1, row + 1));
 				}
 			}
 		}
 
-		cout << "pawn valid moves size: " << validMoves.size() << endl;
+
 		// OHESTALYÖNTI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 	}
+
 	// Rook, both colors
 	else if(type == ROOK)
 	{
@@ -921,7 +939,7 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 			{
 				if(_board[row][col - i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(coordinates(col-i, row));
+					validMoves.push_back(coordinates(col - i, row));
 				}
 				else
 				{
@@ -931,7 +949,7 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 					}
 					else
 					{
-						validMoves.push_back(coordinates(col-i, row));
+						validMoves.push_back(coordinates(col - i, row));
 						break;
 					}
 				}
@@ -944,7 +962,7 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 			{
 				if(_board[row][col + i]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(coordinates(col+i, row));
+					validMoves.push_back(coordinates(col + i, row));
 				}
 				else
 				{
@@ -954,7 +972,7 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 					}
 					else
 					{
-						validMoves.push_back(coordinates(col+i, row));
+						validMoves.push_back(coordinates(col + i, row));
 						break;
 					}
 				}
@@ -967,7 +985,7 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 			{
 				if(_board[row - i][col]->getType() == EMPTYTILE)
 				{
-					validMoves.push_back(coordinates(col, row-i));
+					validMoves.push_back(coordinates(col, row - i));
 				}
 				else
 				{
@@ -1010,10 +1028,10 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 	// Bishop, both colors
 	else if(type == BISHOP)
 	{
-	// Left up diagonal			
+		// Left up diagonal			
 		for(int i = 1; i <= 7; i++)
 		{
-					
+
 			if(col - i >= 0 && row - i >= 0)
 			{
 				if(_board[row - i][col - i]->getType() == EMPTYTILE)
@@ -1362,207 +1380,165 @@ vector<coordinates> chessBoardManager::calculateAvailableMovesForPiece(Piece* pi
 	// Moving a king requires to check if the position is free as well as checking if it is under threat
 	else if(type == KING)
 	{
-		bool threat = false; // Flag for checking threat
 		// Left up diagonal
-		if(col - 1 >= 0 && row + 1 <= 7)
+		vector<Piece*> surroundingTiles;
+
+		if(col - 1 >= 0 && row - 1 >= 0)
 		{
-			// If the position is free or contains an enemy
-			if(_board[row + 1][col - 1]->getType() == EMPTYTILE || _board[row + 1][col - 1]->getColor() != color)
-			{
-				// Check if it is also under threat
-				for(int i = 0; i < _board[row + 1][col - 1]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row + 1][col - 1]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row + 1) += to_string(col - 1));
-				}
-			}
+			surroundingTiles.push_back(_board[row - 1][col - 1]);
 		}
 		// Left down diagonal
-		else if(col - 1 >= 0 && row - 1 >= 0)
+		else if(col - 1 >= 0 && row + 1 <= 7)
 		{
-			if(_board[row - 1][col - 1]->getType() == EMPTYTILE || _board[row - 1][col - 1]->getColor() != color)
-			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row - 1][col - 1]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row - 1][col - 1]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row - 1) += to_string(col - 1));
-				}
-			}
+			surroundingTiles.push_back(_board[row + 1][col - 1]);
 		}
 		// Right up diagonal
-		if(col - 1 >= 0 && row + 1 <= 7)
-		{
-			if(_board[row + 1][col - 1]->getType() == EMPTYTILE || _board[row + 1][col - 1]->getColor() != color)
-			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row + 1][col - 1]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row + 1][col - 1]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row + 1) += to_string(col - 1));
-				}
-			}
-		}
-		// Right down diagonal
 		if(col + 1 <= 7 && row - 1 >= 0)
 		{
-			if(_board[row - 1][col + 1]->getType() == EMPTYTILE || _board[row - 1][col + 1]->getColor() != color)
-			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row - 1][col + 1]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row - 1][col + 1]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row - 1) += to_string(col + 1));
-				}
-			}
+			surroundingTiles.push_back(_board[row - 1][col + 1]);
+
+		}
+		// Right down diagonal
+		if(col + 1 <= 7 && row + 1 <= 7)
+		{
+			surroundingTiles.push_back(_board[row + 1][col + 1]);
 		}
 		// Left
 		if(col - 1 >= 0)
 		{
-			if(_board[row][col - 1]->getType() == EMPTYTILE || _board[row][col - 1]->getColor() != color)
-			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row][col - 1]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row][col - 1]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row) += to_string(col - 1));
-				}
-			}
+			surroundingTiles.push_back(_board[row][col - 1]);
 		}
 		// Up
-		if(row + 1 <= 7)
+		if(row - 1 >= 0)
 		{
-			if(_board[row + 1][col]->getType() == EMPTYTILE || _board[row + 1][col]->getColor() != color)
-			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row + 1][col]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row + 1][col]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row + 1) += to_string(col));
-				}
-			}
+			surroundingTiles.push_back(_board[row - 1][col]);
+
 		}
 		// Right
 		if(col + 1 <= 7)
 		{
-			if(_board[row][col + 1]->getType() == EMPTYTILE || _board[row][col + 1]->getColor() != color)
-			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row][col + 1]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row][col + 1]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row) += to_string(col + 1));
-				}
-			}
+			surroundingTiles.push_back(_board[row][col + 1]);
+
 		}
 		// Down
-		if(row - 1 >= 0)
+		if(row + 1 <= 7)
 		{
-			if(_board[row - 1][col]->getType() == EMPTYTILE || _board[row - 1][col]->getColor() != color)
+			surroundingTiles.push_back(_board[row + 1][col]);
+		}
+
+		auto suitableTiles = removeNonKingableTiles(surroundingTiles, color);
+		for(int i = 0; i < suitableTiles.size(); i++)
+		{
+			validMoves.push_back(suitableTiles[i]->getCoordinates());
+		}
+
+		// Check for castling 
+		// To left
+		
+		auto castlingTiles = getSuitableCastlingTiles(piece);
+		for(int i = 0; i < castlingTiles.size(); i++)
+		{
+			validMoves.push_back(castlingTiles[i]);
+		}		
+	}
+	cout << "avilable move size: " << validMoves.size() << endl;
+	return validMoves;	
+}
+
+
+vector<coordinates> chessBoardManager::getSuitableCastlingTiles(Piece* king)
+{	
+	int kingRow = king->getCoordinates().getBoardRowIndex();
+	int kingColumn = king->getCoordinates().getBoardColumnIndex();
+	vector<coordinates> suitableTiles;
+
+	if(king->isMoved() == false && _board[kingRow][0]->getType() == ROOK && _board[kingRow][0]->isMoved() == false)
+	{
+		int offset = -2; // target tile offset (2 tiles to the left from the king for both colors)
+		bool canCastle = true; // initialize castling to true, try to change it to false in the following iterative checks
+		for(int i = 1; i < 4; i++)
+		{
+			Piece* tile = _board[kingRow][kingColumn - i];
+			auto threatVector = tile->getThreatVector();
+			bool tileUnderEnemyThreat = false;
+			for(int i = 0; i < tile->getThreatVector().size(); i++)
 			{
-				// Check if it is under threat
-				for(int i = 0; i < _board[row - 1][col]->getThreatVector().size(); i++)
-				{
-					// Get targeted piece's threat vector that contains threat colors
-					int threatColor = _board[row - 1][col]->getThreatVector()[i]->getColor();
-					// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
-					if(threatColor != color && threatColor != 0)
-					{
-						threat = true;
-						break;
-					}
-				}
-				// If the piece is free and not under threat -> add position to valid moves
-				if(!threat)
-				{
-					validMoves.push_back(to_string(row - 1) += to_string(col));
-				}
+				if(threatVector[i]->getColor() != king->getColor())
+					tileUnderEnemyThreat = true;
 			}
+
+			if(tile->getType() != EMPTYTILE || tileUnderEnemyThreat == true)
+			{// piece is blocked by a piece or is under enemy threat 
+				canCastle = false;
+				break;
+			}
+		}
+		if(canCastle)
+		{
+			suitableTiles.push_back(coordinates(kingColumn + offset, kingRow));
 		}
 	}
 
-	for(coordinates coord : validMoves)
+	// To right
+	if(king->isMoved() == false && _board[kingRow][7]->getType() == ROOK && _board[kingRow][7]->isMoved() == false)
 	{
-		cout << "new available move: " << coord.toCharString() << endl;
+		int offset = 2; // target tile offset (2 tiles to the right from the king for both colors)
+		bool canCastle = true; // initialize castling to true, try to change it to false in the following iterative checks
+		for(int i = 1; i < 3; i++)
+		{
+			Piece* tile = _board[kingRow][kingColumn + i];
+			auto threatVector = tile->getThreatVector();
+			bool tileUnderEnemyThreat = false;
+			for(int i = 0; i < tile->getThreatVector().size(); i++)
+			{
+				if(threatVector[i]->getColor() != king->getColor())
+					tileUnderEnemyThreat = true;
+			}
+
+			if(tile->getType() != EMPTYTILE || tileUnderEnemyThreat == true)
+			{// piece is blocked by a piece or is under enemy threat 
+				canCastle = false;
+				break;
+			}
+		}
+		if(canCastle)
+		{
+			suitableTiles.push_back(coordinates(kingColumn + offset, kingRow));
+		}
 	}
-	return validMoves;
+	return suitableTiles;
+
+}
+
+vector<Piece*> removeNonKingableTiles(vector<Piece*> tiles, int color) {
+	vector<Piece*> suitableTiles;
+	for(int i = 0; i < tiles.size(); i++)
+	{
+		auto target = tiles[i];
+		bool threat = false;
+		// If the position is free or contains an enemy
+		if(target->getType() == EMPTYTILE || target->getColor() != color)
+		{
+			// Check if it is also under threat
+			for(int i = 0; i < target->getThreatVector().size(); i++)
+			{
+				// Get targeted piece's threat vector that contains threat colors
+				int threatColor = target->getThreatVector()[i]->getColor();
+				// If the piece contains threat that is not equal to ours -> break and don't add to valid moves
+				if(threatColor != color && threatColor != 0)
+				{
+					threat = true;
+					break;
+				}
+			}
+			// If the piece is free and not under threat -> add position to valid moves
+			if(!threat)
+			{
+				suitableTiles.push_back(target);
+			}
+		}
+	}
+	return suitableTiles;
 }
 
 void chessBoardManager::addPlayer(Player* p) {
@@ -1579,16 +1555,19 @@ void chessBoardManager::printBoard(Board* board, bool simulation) {
 	int simuColor = 3;
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
+	// TODO: ADD THREATS ON BOARD 
 
 	COORD coord;
 	coord.X = 0;
 	coord.Y = 0;
+
 	SetConsoleCursorPosition(hConsole, coord);
+
 	//system("CLS");
 	if(simulation)
 		SetConsoleTextAttribute(hConsole, 3);
 
-	cout << "\n\t\t  A  B  C  D  E  F  G  H" << endl;
+	std::cout << "\n\t\t  A  B  C  D  E  F  G  H" << endl;
 	int TILE_COLOR;
 
 	int COLOR_BLACK = 16;
@@ -1611,11 +1590,11 @@ void chessBoardManager::printBoard(Board* board, bool simulation) {
 
 
 			if(j == 0)
-				cout << "\t\t ";
+				std::cout << "\t\t ";
 			if(piece->getType() == EMPTYTILE)
 			{
 				SetConsoleTextAttribute(hConsole, TILE_COLOR);
-				cout << "   ";
+				std::cout << "   ";
 			}
 			else
 			{
@@ -1630,29 +1609,29 @@ void chessBoardManager::printBoard(Board* board, bool simulation) {
 				default:
 					SetConsoleTextAttribute(hConsole, COLOR_BLACK | TILE_COLOR);
 				}
-				cout << " " << numToPiece(piece->getType()) << /* piece->getColor() */  " ";
+				std::cout << " " << numToPiece(piece->getType()) << /* piece->getColor() */  " ";
 			}
 			if(simulation)
 				SetConsoleTextAttribute(hConsole, 3); // light blue, cyan
 			else
 				SetConsoleTextAttribute(hConsole, 15);
 			if(j == 7)
-				cout << " " << i + 1 << endl;
+				std::cout << " " << i + 1 << endl;
 		}
 	}
-	cout << endl;
-	cout << endl;
+	std::cout << endl;
+	std::cout << endl;
 }
 
 extern int charToInt(char c);
 
 bool chessBoardManager::checkForMate(Player* realPlayer) {
 	// Create a temporary chessboard for simulating all possible moves for next turn
-	cout << "Entering mate simulation.." << endl;
+	std::cout << "Entering mate simulation.." << endl;
 
 	Piece* king;
 	bool simulationResult = false;
-	bool isChecked = false;
+	bool isChecked = true;
 	auto tempBoard = this->_board;
 
 	vector<Piece*> pieces = realPlayer->getPieces();
@@ -1664,7 +1643,7 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 		}
 	}
 
-	cout << "Checking for mate status..." << endl;
+	std::cout << "Checking for mate status..." << endl;
 
 	Player* simCurrentPlayer = new Player(realPlayer->getColor());
 	Player* simOpponent = new Player(realPlayer->getOpponent()->getColor());
@@ -1682,8 +1661,11 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 	simBoardMgr->initBoard(simCurrentPlayer);
 	simBoardMgr->initBoard(simOpponent);
 
-	cout << "================ SIMULATION ================ " << endl;
+	std::cout << "================ SIMULATION ================ " << endl;
+
 	printBoard(simBoardMgr->getBoard(), true);
+
+
 	vector<Piece*> simPieces = simCurrentPlayer->getPieces();
 
 	for(int i = 0; i < simPieces.size(); i++)
@@ -1703,16 +1685,16 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 				if(!isChecked) // game is not checkmate -> we can return
 					break;
 			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
 		};
-		if(!isChecked)
+		if(!isChecked) // not checked -> there is a move that makes checkmate 
 			break;
 	}
 
 	printBoard(simBoardMgr->getBoard(), false);
 	simulationResult = isChecked;
-	cout << "================ END OF SIMULATION ================ " << endl;
+	std::cout << "================ END OF SIMULATION ================ " << endl;
 
 	/* if king is STILL threatened -> mate */
 
@@ -1759,9 +1741,9 @@ string chessBoardManager::numToPiece(int num) {
 void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 
 #if _DEBUG
-	cout << "Checking if player " << player->toString() << " is checked.." << endl;
+	std::cout << "Checking if player " << player->toString() << " is checked.." << endl;
 #endif
-	int kingThreatsCount = 0;
+	size_t kingThreatsCount = 0;
 	Piece* friendlyKing = NULL;
 	vector<Piece*> pieces = player->getPieces();
 
@@ -1784,7 +1766,7 @@ void chessBoardManager::calculateAllPossibleMoves(Player* p) {
 	vector<coordinates> moves;
 	vector<coordinates> availableMoves;
 
-	cout << "updating all possible moves for player " << to_string(p->getColor()) << endl;
+	std::cout << "updating all possible moves for player " << to_string(p->getColor()) << endl;
 	for(int i = 0; i <= 7; i++)
 	{
 		for(int j = 0; j <= 7; j++)
@@ -1801,3 +1783,4 @@ void chessBoardManager::calculateAllPossibleMoves(Player* p) {
 		}
 	}
 }
+

@@ -15,7 +15,7 @@ public:
 	string numToPiece(int);	
 	void initBoard(Player*);
 	void printBoard(Board*, bool);
-	void setPieceTo(Piece*, coordinates, bool simulate);
+	void setPieceTo(Piece*, coordinates, bool simulate, bool updateState);
 	void updatePlayerCheckedStatus(Player*);
 	void calculateAllPossibleMoves(Player*);  // Check every possible player's move
 	bool checkForMate(Player*);
@@ -28,6 +28,7 @@ public:
 	Piece* getPiece(int, int);
 	Board* getBoard(void);
 	vector<coordinates> calculateAvailableMovesForPiece(Piece*);
+	vector<coordinates> getSuitableCastlingTiles(Piece* king);
 	void addPlayer(Player*);
 	vector<Player*> getPlayers();
 	void updateGameState();

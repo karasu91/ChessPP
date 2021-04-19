@@ -19,13 +19,33 @@ using namespace std;
 
 void initGame(void);
 
-class ActivePlayers {
+
+string convertToUpper(string str) {
+	string ret = "";
+	for(auto& c : str) 
+		ret += toupper(c);
+	return ret;
+}
+
+class Game {
 public:
-	ActivePlayers();
-	~ActivePlayers();
+	Game();
+	~Game();
 	Player* currentPlayer = NULL;
+	chessBoardManager* mgr = NULL;
+	int autoPlayDelayMs = 100;
 	void swapTurn() {
 		currentPlayer = currentPlayer->getOpponent();
+	}
+	void playMove(string start, string end) 	
+	{
+		start = convertToUpper(start);
+		end = convertToUpper(end);
+		if(mgr->playMove(currentPlayer, coordinates(start), coordinates(end)) == true)
+		{
+			swapTurn();
+			std::this_thread::sleep_for(std::chrono::milliseconds(autoPlayDelayMs));
+		}
 	}
 };
 
@@ -35,27 +55,12 @@ int main() {
 	return 0;
 }
 
+
+
 void initGame(void) {
-	int gameOver = 0;
-
-	/*
-	  1 2 3 4 5 6 7 8
-	  _____________
-
-	|R H B K Q B H R|	A	B
-	|P P P P P P P P|	B	B
-	|0 0 0 0 0 0 0 0|	C
-	|0 0 0 0 0 0 0 0|	D
-	|0 0 0 0 0 0 0 0|	E
-	|0 0 0 0 0 0 0 0|	F
-	|P P P P P P P P|	G	W
-	|R H B Q K B H R|	H	W
-	¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
-	*/
-
 
 	chessBoardManager* boardManager = new chessBoardManager();
-	ActivePlayers* activePlayers = new ActivePlayers();
+	Game* game = new Game();
 
 	auto gameBoard = boardManager->getBoard();
 
@@ -72,71 +77,65 @@ void initGame(void) {
 	blackP->initPieces(BLACK);
 	boardManager->initBoard(whiteP);
 	boardManager->initBoard(blackP);
-
 	boardManager->printBoard(gameBoard, false);
 
+	game->mgr = boardManager;
+
 	// Starting player is white
-	activePlayers->currentPlayer = whiteP;
-
-	cout << "TEST: " << endl;
-	int val1 = 5;
-	int val2 = 5;
-
-	cout << "converting_column " << val2 << " results in " << convertColumnIndexToChar(val2) << endl;
-	cout << "converting_row" << val1 << " results in " << convertRowIndexToChar(val1) << endl;
-	
-
-
-	unsigned sleepforMs = 750;
+	game->currentPlayer = whiteP;
+	cin.ignore();
 	// initial moves
-	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("F7"), coordinates("F6")) == true)
-		activePlayers->swapTurn();
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+	game->playMove("F7", "F6");
+	game->playMove("E2", "E3");
+	game->playMove("G7", "G5");
+	game->playMove("F2", "F4");
+	game->playMove("E7", "E6");
+	game->playMove("D1", "F3");
+	game->playMove("G8", "H6");
+	game->playMove("B1", "C3");
+	game->playMove("F8", "B4");
+	game->playMove("A2", "A3");
+	game->playMove("D8", "E7");
+	game->playMove("A3", "B4");
 
-	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("E2"), coordinates("E3")) == true)
-		activePlayers->swapTurn();
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+	game->playMove("B7", "B5");
+	game->playMove("C3", "B5");
+	game->playMove("C8", "A6");
+	game->playMove("C2", "C4");
+	game->playMove("B8", "C6");
+	game->playMove("G1", "H3");
+	game->playMove("E8", "C8");
+	game->playMove("f1", "e2");
+	game->playMove("D8", "G8");
+	game->playMove("E1", "G1"); // castle to right
+	game->playMove("C6", "D4");
+	game->playMove("F3", "A8");
 
-	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("G7"), coordinates("G5")) == true)
-		activePlayers->swapTurn();
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
-
-	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("F2"), coordinates("F4")) == true)
-		activePlayers->swapTurn();
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
-
-	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("B8"), coordinates("C6")) == true)
-		activePlayers->swapTurn();
-	std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
-
-	if(boardManager->playMove(activePlayers->currentPlayer, coordinates("D1"), coordinates("H5")) == true)
-		activePlayers->swapTurn();
-
-	//std::this_thread::sleep_for(std::chrono::milliseconds(sleepforMs));
+	bool* gameOverPtr = &game->mgr->gameOver;
 
 	string start;
 	string end;
 
 	// Start game
-	while(!boardManager->gameOver)
+	while(!*gameOverPtr)
 	{
-		cout << activePlayers->currentPlayer->toString() << ": Select piece: ";
-		cin >> start;
-		cout << activePlayers->currentPlayer->toString() << ": Select target: ";
-		cin >> end;
+		std::cout << game->currentPlayer->toString() << ": Select piece: "; cin >> start;
+		std::cout << game->currentPlayer->toString() << ": Select target: "; cin >> end;
 
-		if(boardManager->playMove(activePlayers->currentPlayer, coordinates(start), coordinates(end)) == true)
-			activePlayers->swapTurn();
+		game->playMove(start, end);
 	}
+	Player* winner = game->currentPlayer->isWinner ? game->currentPlayer : game->currentPlayer->getOpponent();
 
-	Player* winner = activePlayers->currentPlayer->isWinner ? activePlayers->currentPlayer : activePlayers->currentPlayer->getOpponent();
+	std::cout << "Game over! Winner: " << winner->toString() << "!                             " << endl << endl;
+	cin.ignore();
+	cin.ignore();
+	cin.ignore();
 
-	cout << "Game over! Winner: " << winner->toString() << "!                             " << endl << endl;
 	cin.ignore();
 }
 
-ActivePlayers::ActivePlayers() {
+Game::Game() {
 }
 
-ActivePlayers::~ActivePlayers() {
+Game::~Game() {
 }

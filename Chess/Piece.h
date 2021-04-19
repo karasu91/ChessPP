@@ -3,7 +3,9 @@
 #include <iostream>
 #include <vector>
 #include "coordinates.h"
+
 using namespace std;
+class Player;
 
 class Piece {
 public:
@@ -15,6 +17,7 @@ public:
 	bool isMoved(void);
 	void setMoved(bool);
 	void addThreat(Piece*);
+	void setOwner(Player*);
 	void resetThreatVector(void);
 	void setAvailableMoves(vector<coordinates>);
 	void clearAvailableMoves();
@@ -25,6 +28,7 @@ public:
 	void setCoordinates(const coordinates &coords);
 	void operator =(const Piece &right);
 private:
+	Player* _owner;
 	vector<Piece*> _threats;
 	vector<coordinates> _availableMoves;
 	coordinates _coords;

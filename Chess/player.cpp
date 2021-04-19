@@ -9,6 +9,19 @@ using namespace std;
 
 extern bool boeq(int, int, int); // in chessboardManager.cpp
 
+void Player::removePiece(Piece* removeThis) 
+{
+	for(int i = 0; i < pieces.size(); i++)
+	{
+		if(pieces[i] == removeThis)
+		{
+			pieces.erase(pieces.begin() + i);
+			break;
+		}
+	}
+
+}
+
 Player::Player(int col) {
 	this->color = col;
 }
@@ -57,8 +70,11 @@ void Player::initPieces(int color) {
 		addPiece(new Piece(BLACK, KING, coordinates("E1")));
 		addPiece(new Piece(BLACK, BISHOP, coordinates("F1")));
 		addPiece(new Piece(BLACK, HORSE, coordinates("G1")));
-		addPiece(new Piece(BLACK, ROOK, coordinates("H1")));
+		addPiece(new Piece(BLACK, ROOK, coordinates("H1")));		
 	}
+
+	for(Piece* p : pieces)
+		p->setOwner(this);
 }
 
 vector<Piece*> Player::getPieces(void) {
@@ -82,7 +98,6 @@ void Player::copyPieces(vector<Piece*> oldPieces) {
 }
 
 Player::~Player() {
-	cout << "Deleting " << this->toString() << endl;
 	for(int i = 0; i < pieces.size(); i++)
 		delete pieces[i];
 
@@ -96,7 +111,7 @@ void Player::addPiece(Piece* piece) {
 void Player::printPieces(void) {
 	for(int i = 0; i < (int)pieces.size(); i++)
 	{
-		cout << getPieces()[i]->getColor() << " " << getPieces()[i]->getType() << endl;
+		std::cout << getPieces()[i]->getColor() << " " << getPieces()[i]->getType() << endl;
 	}
 }
 
@@ -127,8 +142,9 @@ void Player::setOpponent(Player* p) {
 	if(p != this)
 		opponent = p;
 	else
-		cout << "Cant set myself as an opponent!" << endl;
+		std::cout << "Cant set myself as an opponent!" << endl;
 }
+
 
 Player* Player::getOpponent() {
 	return opponent;

@@ -9,6 +9,7 @@ class chessBoardManager;
 class Player
 {
 public:
+	void removePiece(Piece*);
 	Player(int);
 	~Player();
 	void addPiece(Piece*);
@@ -22,6 +23,7 @@ public:
 	void setChecked(bool);
 	bool isChecked();
 	void setOpponent(Player*);
+	
 	Player* getOpponent();
 	bool isWinner = false;
 private:

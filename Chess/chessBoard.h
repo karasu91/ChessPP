@@ -26,6 +26,7 @@ public:
 	bool simulateMove(Player* player, coordinates startCoord, coordinates targetCoord);
 
 	Piece* getPiece(int, int);
+	void upgradePawnCheck(Piece* pawn);
 	Board* getBoard(void);
 	vector<coordinates> calculateAvailableMovesForPiece(Piece*);
 	vector<coordinates> getSuitableCastlingTiles(Piece* king);

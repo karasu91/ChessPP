@@ -9,9 +9,6 @@ Piece::Piece(int col, int typ, coordinates coords) {
 	_color = col;
 	_type = typ;
 	_hasMoved = 0;
-#if _DEBUG
-	std::cout << "allocating " << coords.toCharString() << " to piece " << this->toString() << endl;
-#endif
 	_coords = coords;
 }
 
@@ -28,8 +25,8 @@ int Piece::getColor(void) {
 	return _color;
 }
 
-vector<Piece*> Piece::getThreatVector(void) {
-	return _threats;
+vector<Piece*>* Piece::getThreatVector(void) {
+	return &_threats;
 }
 
 coordinates Piece::getCoordinates() {
@@ -55,6 +52,11 @@ void Piece::operator=(const Piece& right) {
 	_hasMoved = right._hasMoved;
 }
 
+Player* Piece::getOwner() {
+	return _owner;
+}
+
+
 void Piece::resetThreatVector(void) {
 	_threats.clear();
 }
@@ -67,8 +69,8 @@ void Piece::clearAvailableMoves() {
 	_availableMoves.clear();
 }
 
-vector<coordinates> Piece::getAvailableMoves() {
-	return _availableMoves;
+vector<coordinates>* Piece::getAvailableMoves() {
+	return &_availableMoves;
 }
 
 

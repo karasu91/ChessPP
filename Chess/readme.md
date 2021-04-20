@@ -1,7 +1,7 @@
 TODO:
-- [ ] ohestalyonti
-- [ ]  code cleanup
-- [ ] piece value (scores assigned to each piece?)
-- [ ] simple ai
-- [ ] recursive depth search
-- [ ] netcode
+- [ ] En passant
+- [ ] Code cleanup
+- [ ] Piece value (scores assigned to each piece?)
+- [ ] Simple ai
+- [ ] Recursive depth search
+- [ ] Netcode

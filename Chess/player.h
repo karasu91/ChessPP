@@ -6,8 +6,7 @@ using namespace std;
 
 class chessBoardManager;
 
-class Player
-{
+class Player {
 public:
 	void removePiece(Piece*);
 	Player(int);
@@ -15,7 +14,7 @@ public:
 	void addPiece(Piece*);
 	int getColor(void);
 	void initPieces(int);
-	void printPieces(void);	
+	void printPieces(void);
 	string toString();
 	vector<string> getMoves(void);
 	vector<Piece*> getPieces(void);
@@ -23,7 +22,7 @@ public:
 	void setChecked(bool);
 	bool isChecked();
 	void setOpponent(Player*);
-	
+
 	Player* getOpponent();
 	bool isWinner = false;
 private:
@@ -32,5 +31,3 @@ private:
 	Player* opponent = NULL;
 	bool _checked = false;
 };
-
-

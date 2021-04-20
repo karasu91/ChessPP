@@ -4,7 +4,6 @@
 
 using namespace std;
 
-
 Piece::Piece(int col, int typ, coordinates coords) {
 	_color = col;
 	_type = typ;
@@ -20,31 +19,29 @@ Piece::~Piece() {
 #endif
 }
 
-
 int Piece::getColor(void) {
 	return _color;
 }
 
-vector<Piece*>* Piece::getThreatVector(void) {
-	return &_threats;
+vector<Piece*> Piece::getThreatVector(void) {
+	return _threats;
 }
 
 coordinates Piece::getCoordinates() {
 	return _coords;
 }
 
-void Piece::setCoordinates(const coordinates &coords) {
+void Piece::setCoordinates(const coordinates& coords) {
 #if _DEBUG
 	std::cout << "Setting new coordinates..." << endl;
 #endif
 	_coords = coords;
-
 }
 
 void Piece::operator=(const Piece& right) {
-	for(int i = 0; i < right._availableMoves.size(); i++)
+	for (int i = 0; i < right._availableMoves.size(); i++)
 		this->_availableMoves.push_back(right._availableMoves[i]);
-	for(int i = 0; i < right._threats.size(); i++)
+	for (int i = 0; i < right._threats.size(); i++)
 		this->_threats.push_back(right._threats[i]);
 	_coords = right._coords;
 	_color = right._color;
@@ -55,7 +52,6 @@ void Piece::operator=(const Piece& right) {
 Player* Piece::getOwner() {
 	return _owner;
 }
-
 
 void Piece::resetThreatVector(void) {
 	_threats.clear();
@@ -69,58 +65,50 @@ void Piece::clearAvailableMoves() {
 	_availableMoves.clear();
 }
 
-vector<coordinates>* Piece::getAvailableMoves() {
-	return &_availableMoves;
+vector<coordinates> Piece::getAvailableMoves() {
+	return _availableMoves;
 }
-
-
-string numToPiece(int num) {
-	switch(num)
-	{
-	case 0:
-		return "EMPTY";
-	case 1:
-		return "P";
-	case 2:
-		return "R";
-	case 3:
-		return "H";
-	case 4:
-		return "B";
-	case 5:
-		return "Q";
-	case 6:
-		return "K";
-	}
-}
-
 
 string Piece::toString(void) {
-	return numToPiece(getType()) + to_string(getColor());
+	int num = getType();
+	string str = "";
+	switch (num) {
+	case 0:
+		str = "EMPTY";
+	case 1:
+		str = "P";
+	case 2:
+		str = "R";
+	case 3:
+		str = "H";
+	case 4:
+		str = "B";
+	case 5:
+		str = "Q";
+	case 6:
+		str = "K";
+	}
+	return str + to_string(getColor());
 }
 
 void Piece::addThreat(Piece* piece) {
 	//string msg = piece->getColor() + " type: " + piece->getType();
 	////std::cout << msg << endl;
 	//msg = "";
-	if(piece->getType() == EMPTYTILE)
+	if (piece->getType() == EMPTYTILE)
 		return;
 
-	if(piece->getColor() == this->getColor()) // friendly pieces do not matter
+	if (piece->getColor() == this->getColor()) // friendly pieces do not matter
 		return;
 
 	// Check if threats array already contains the piece
-	if(std::find(_threats.begin(), _threats.end(), piece) != _threats.end())
-	{
+	if (std::find(_threats.begin(), _threats.end(), piece) != _threats.end()) {
 		// Element in vector.
 	}
-	else
-	{
-		this->_threats.push_back(piece);
+	else {
+		_threats.push_back(piece);
 #if _DEBUG
-		if(this->getType() == KING)
-		{
-
+		if (this->getType() == KING) {
 			string msg = "Check! " + this->toString() + " is threatened by " + piece->toString();
 			std::cout << msg << endl;
 			std::cout << "KING threat count: " << _threats.size() << endl;
@@ -132,8 +120,6 @@ void Piece::addThreat(Piece* piece) {
 void Piece::setOwner(Player* p) {
 	_owner = p;
 }
-
-
 
 int Piece::getType(void) {
 	return _type;
@@ -150,6 +136,3 @@ bool Piece::isMoved(void) {
 void Piece::setMoved(bool state) {
 	_hasMoved = state;
 }
-
-
-

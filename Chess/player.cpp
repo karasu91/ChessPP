@@ -2,24 +2,20 @@
 #include "Piece.h"
 #include <string>
 #include "chessBoard.h"
-#include <locale> 
+#include <locale>
 #include "defines.h"
 
 using namespace std;
 
 extern bool boeq(int, int, int); // in chessboardManager.cpp
 
-void Player::removePiece(Piece* removeThis) 
-{
-	for(int i = 0; i < pieces.size(); i++)
-	{
-		if(pieces[i] == removeThis)
-		{
+void Player::removePiece(Piece* removeThis) {
+	for (int i = 0; i < pieces.size(); i++) {
+		if (pieces[i] == removeThis) {
 			pieces.erase(pieces.begin() + i);
 			break;
 		}
 	}
-
 }
 
 Player::Player(int col) {
@@ -27,9 +23,7 @@ Player::Player(int col) {
 }
 
 void Player::initPieces(int color) {
-
-	if(color == WHITE)
-	{
+	if (color == WHITE) {
 		/* Pawns */
 		addPiece(new Piece(WHITE, PAWN, coordinates("A7")));
 		addPiece(new Piece(WHITE, PAWN, coordinates("B7")));
@@ -50,8 +44,7 @@ void Player::initPieces(int color) {
 		addPiece(new Piece(WHITE, HORSE, coordinates("G8")));
 		addPiece(new Piece(WHITE, ROOK, coordinates("H8")));
 	}
-	else
-	{ // Color == Black
+	else { // Color == Black
   /* Pawns */
 		addPiece(new Piece(BLACK, PAWN, coordinates("A2")));
 		addPiece(new Piece(BLACK, PAWN, coordinates("B2")));
@@ -70,10 +63,10 @@ void Player::initPieces(int color) {
 		addPiece(new Piece(BLACK, KING, coordinates("E1")));
 		addPiece(new Piece(BLACK, BISHOP, coordinates("F1")));
 		addPiece(new Piece(BLACK, HORSE, coordinates("G1")));
-		addPiece(new Piece(BLACK, ROOK, coordinates("H1")));		
+		addPiece(new Piece(BLACK, ROOK, coordinates("H1")));
 	}
 
-	for(Piece* p : pieces)
+	for (Piece* p : pieces)
 		p->setOwner(this);
 }
 
@@ -82,10 +75,8 @@ vector<Piece*> Player::getPieces(void) {
 }
 
 void Player::copyPieces(vector<Piece*> oldPieces) {
-
 	pieces.clear();
-	for(int i = 0; i < oldPieces.size(); i++)
-	{
+	for (int i = 0; i < oldPieces.size(); i++) {
 		coordinates oldCoords = oldPieces[i]->getCoordinates();
 		Piece* pieceCopy = new Piece(
 			oldPieces[i]->getColor(),
@@ -98,7 +89,7 @@ void Player::copyPieces(vector<Piece*> oldPieces) {
 }
 
 Player::~Player() {
-	for(int i = 0; i < pieces.size(); i++)
+	for (int i = 0; i < pieces.size(); i++)
 		delete pieces[i];
 
 	pieces.clear();
@@ -109,15 +100,13 @@ void Player::addPiece(Piece* piece) {
 }
 
 void Player::printPieces(void) {
-	for(int i = 0; i < (int)pieces.size(); i++)
-	{
+	for (int i = 0; i < (int) pieces.size(); i++) {
 		std::cout << getPieces()[i]->getColor() << " " << getPieces()[i]->getType() << endl;
 	}
 }
 
 string Player::toString() {
-	switch(color)
-	{
+	switch (color) {
 	case BLACK:
 		return "PLAYER_BLACK";
 	case WHITE:
@@ -126,9 +115,6 @@ string Player::toString() {
 		return "PLAYER_?";
 	}
 }
-
-
-
 
 bool Player::isChecked() {
 	return _checked;
@@ -139,23 +125,15 @@ void Player::setChecked(bool check) {
 }
 
 void Player::setOpponent(Player* p) {
-	if(p != this)
+	if (p != this)
 		opponent = p;
 	else
 		std::cout << "Cant set myself as an opponent!" << endl;
 }
 
-
 Player* Player::getOpponent() {
 	return opponent;
-
 }
-
-//https://stackoverflow.com/a/30727561
-int charToInt(char c) {
-	return (int)c - '0';
-}
-
 
 int Player::getColor(void) {
 	return color;

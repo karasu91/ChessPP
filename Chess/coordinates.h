@@ -10,15 +10,12 @@ extern int convertRowCharToIndex(string);
 extern string convertColumnIndexToChar(int);
 extern string convertRowIndexToChar(int);
 
-extern int charToInt(char);
-
 typedef struct coordinates {
 private:
 	string _row = "";
 	string _column = "";
 public:
-	coordinates() {
-	};
+	coordinates() {};
 
 	coordinates(string str) {
 		_column = str[0];

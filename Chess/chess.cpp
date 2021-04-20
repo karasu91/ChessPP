@@ -20,19 +20,12 @@ using namespace std;
 
 void initGame(void);
 
-
-
-
-
 int main() {
 	initGame();
 	return 0;
 }
 
-
-
 void initGame(void) {
-
 	string start;
 	string end;
 
@@ -57,7 +50,7 @@ void initGame(void) {
 	boardManager->printBoard(gameBoard, false);
 
 	game->mgr = boardManager;
-
+	game->board = boardManager->getBoard();
 	// Starting player is white
 	game->currentPlayer = whiteP;
 	cin.ignore();
@@ -66,14 +59,13 @@ void initGame(void) {
 
 	bool* gameOverPtr = &game->mgr->gameOver;
 
-
 	// Start game
-	while(!*gameOverPtr)
-	{
+	while (!(*gameOverPtr)) {
 		std::cout << game->currentPlayer->toString() << ": Select piece: "; cin >> start;
 		std::cout << game->currentPlayer->toString() << ": Select target: "; cin >> end;
-		if(game->playMove(start, end) == false)
+		if (game->playMove(start, end) == false)
 			continue;
+		
 	}
 	Player* winner = game->currentPlayer->isWinner ? game->currentPlayer : game->currentPlayer->getOpponent();
 
@@ -85,8 +77,6 @@ void initGame(void) {
 	cin.ignore();
 }
 
-ScriptEngine::ScriptEngine() {
-}
+ScriptEngine::ScriptEngine() {}
 
-ScriptEngine::~ScriptEngine() {
-}
+ScriptEngine::~ScriptEngine() {}

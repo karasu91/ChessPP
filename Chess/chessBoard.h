@@ -7,12 +7,11 @@ using namespace std;
 typedef Piece* Row;
 typedef Row* Board;
 
-class chessBoardManager
-{
+class chessBoardManager {
 public:
 	chessBoardManager();
-	~chessBoardManager();	
-	string numToPiece(int);	
+	~chessBoardManager();
+	string numToPiece(int);
 	void initBoard(Player*);
 	void printBoard(Board*, bool);
 	void setPieceTo(Piece*, coordinates, bool simulate, bool updateState);
@@ -22,20 +21,17 @@ public:
 	void recalculatePieceThreats(void);
 	bool tryMove(Piece* piece, coordinates target, bool simulate);
 	bool playMove(Player*, coordinates, coordinates);
-
 	bool simulateMove(Player* player, coordinates startCoord, coordinates targetCoord);
-
 	Piece* getPiece(int, int);
 	void upgradePawnCheck(Piece* pawn);
 	Board* getBoard(void);
+	void addPlayer(Player*);
 	vector<coordinates> calculateAvailableMovesForPiece(Piece*);
 	vector<coordinates> getSuitableCastlingTiles(Piece* king);
-	void addPlayer(Player*);
 	vector<Player*> getPlayers();
 	void updateGameState();
 	bool gameOver = false;
-private:		
+private:
 	Board* _board;
-	vector<Player*> _players;	
+	vector<Player*> _players;
 };
-

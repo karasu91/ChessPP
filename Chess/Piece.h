@@ -21,12 +21,12 @@ public:
 	void resetThreatVector(void);
 	void setAvailableMoves(vector<coordinates>);
 	void clearAvailableMoves();
-	vector<coordinates>* getAvailableMoves();
+	vector<coordinates> getAvailableMoves();
 	string toString(void);
-	vector<Piece*>* getThreatVector(void);
+	vector<Piece*> getThreatVector(void);
 	coordinates getCoordinates();
-	void setCoordinates(const coordinates &coords);
-	void operator =(const Piece &right);
+	void setCoordinates(const coordinates& coords);
+	void operator =(const Piece& right);
 	bool enPassantable = false;
 	Player* getOwner();
 private:
@@ -37,6 +37,4 @@ private:
 	int _color = 0;
 	int _type = 0;
 	bool _hasMoved = false;
-	
 };
-

@@ -1,6 +1,10 @@
 #include "scriptEngine.h"
+#include <iostream>
 
 bool ScriptEngine::game_script_multiples_moves_checkmate() {
+
+
+
 	try
 	{
 		playMove("F7", "F6");
@@ -31,12 +35,16 @@ bool ScriptEngine::game_script_multiples_moves_checkmate() {
 		return true;
 	} catch (const std::exception& exc)
 	{
-		cout << "Exception happened: " << exc.what() << endl;
+		std::cout << "Exception happened: " << exc.what() << std::endl;
 		return false;
 	}
 }
 
 bool ScriptEngine::game_script_enpassant_test(void) {
+
+	auto players = mgr->getPlayers();
+	int a = 1;
+
 	try
 	{
 		playMove("A7", "A5");
@@ -51,7 +59,7 @@ bool ScriptEngine::game_script_enpassant_test(void) {
 		return true;
 	} catch (const std::exception& exc)
 	{
-		cout << "Exception happened: " << exc.what() << endl;
+		std::cout << "Exception happened: " << exc.what() << std::endl;
 		return false;
 	}
 }

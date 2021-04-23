@@ -3,20 +3,18 @@
 //#include "stdafx.h"
 #include <iostream>
 #include <stdio.h>
-#include "player.h"
 #include <string>
 #include <vector>
-#include "Piece.h"
-#include "chessBoard.h"
-#include "defines.h"
-
 #include <chrono>
 #include <thread>
+#include "defines.h"
+#include "chessBoard.h"
 #include "scriptEngine.h"
+#include "Piece.h"
 
 #define DEMO_MODE 1;
 
-using namespace std;
+
 
 void initGame(void);
 
@@ -26,55 +24,50 @@ int main() {
 }
 
 void initGame(void) {
-	string start;
-	string end;
+	std::string start;
+	std::string end;
 
-	chessBoardManager* boardManager = new chessBoardManager();
-	ScriptEngine* game = new ScriptEngine();
+	chessBoardManager boardManager;
+	ScriptEngine game;
 
-	auto gameBoard = boardManager->getBoard();
-
-	Player* whiteP = new Player(WHITE);
-	Player* blackP = new Player(BLACK);
+	Player* whiteP = new Player(Colors::WHITE);
+	Player* blackP = new Player(Colors::BLACK);
+	whiteP->initPieces();
+	blackP->initPieces();
 
 	whiteP->setOpponent(blackP);
 	blackP->setOpponent(whiteP);
 
-	boardManager->addPlayer(whiteP);
-	boardManager->addPlayer(blackP);
+	boardManager.addPlayer(whiteP);
+	boardManager.addPlayer(blackP);	
 
-	whiteP->initPieces(WHITE);
-	blackP->initPieces(BLACK);
-	boardManager->initBoard(whiteP);
-	boardManager->initBoard(blackP);
-	boardManager->printBoard(gameBoard, false);
+	boardManager.initBoard(whiteP);
+	boardManager.initBoard(blackP);
 
-	game->mgr = boardManager;
-	game->board = boardManager->getBoard();
+	game.mgr = &boardManager;
+	game.board = boardManager.getBoard();
 	// Starting player is white
-	game->currentPlayer = whiteP;
-	cin.ignore();
+	game.currentPlayer = whiteP;
+	std::cin.ignore();
 
-	game->game_script_enpassant_test();
+	game.game_script_enpassant_test();
 
-	bool* gameOverPtr = &game->mgr->gameOver;
+	bool* gameOverPtr = &game.mgr->gameOver;
 
 	// Start game
 	while (!(*gameOverPtr)) {
-		std::cout << game->currentPlayer->toString() << ": Select piece: "; cin >> start;
-		std::cout << game->currentPlayer->toString() << ": Select target: "; cin >> end;
-		if (game->playMove(start, end) == false)
+		std::cout << game.currentPlayer->toCharString() << ": Select piece: "; std::cin >> start;
+		std::cout << game.currentPlayer->toCharString() << ": Select target: "; std::cin >> end;
+		if (game.playMove(start, end) == false)
 			continue;
 		
 	}
-	Player* winner = game->currentPlayer->isWinner ? game->currentPlayer : game->currentPlayer->getOpponent();
+	Player* winner = game.currentPlayer->isWinner ? game.currentPlayer : game.currentPlayer->getOpponent();
 
-	std::cout << "Game over! Winner: " << winner->toString() << "!                             " << endl << endl;
-	cin.ignore();
-	cin.ignore();
-	cin.ignore();
+	std::cout << "Game over! Winner: " << winner->toCharString() << "!                             " << std::endl << std::endl;
+	std::cin.ignore();
+	std::cin.ignore();
 
-	cin.ignore();
 }
 
 ScriptEngine::ScriptEngine() {}

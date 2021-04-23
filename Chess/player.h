@@ -1,33 +1,33 @@
 #pragma once
-#include "Piece.h"
 #include <vector>
+#include "defines.h"
 
-using namespace std;
 
-class chessBoardManager;
+class Piece;
+enum class Colors;
 
 class Player {
 public:
-	void removePiece(Piece*);
-	Player(int);
+	void removePiece(std::shared_ptr<Piece>);
+	Player(Colors);
 	~Player();
-	void addPiece(Piece*);
-	int getColor(void);
-	void initPieces(int);
+	void addPiece(std::shared_ptr<Piece>);
+	Colors getColor(void);
+	void initPieces(void);
 	void printPieces(void);
-	string toString();
-	vector<string> getMoves(void);
-	vector<Piece*> getPieces(void);
-	void copyPieces(vector<Piece*>);
+	std::string toCharString();
+	//vector<string> getMoves(void);
+	std::vector<std::shared_ptr<Piece>> getPieces(void);
+	void copyPieces(std::vector<std::shared_ptr<Piece>>);
 	void setChecked(bool);
-	bool isChecked();
+	bool isChecked(void);
 	void setOpponent(Player*);
-
-	Player* getOpponent();
+	Player* getOpponent(void);
 	bool isWinner = false;
+
 private:
-	int color = 0;
-	vector<Piece*> pieces;
+	Colors color;
+	std::vector<std::shared_ptr<Piece>> pieces;
 	Player* opponent = NULL;
 	bool _checked = false;
 };

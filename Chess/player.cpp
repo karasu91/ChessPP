@@ -1,87 +1,82 @@
-﻿#include "player.h"
-#include "Piece.h"
-#include <string>
-#include "chessBoard.h"
+﻿#include <string>
 #include <locale>
-#include "defines.h"
+#include "player.h"
+#include "Piece.h"
 
-using namespace std;
+
 
 extern bool boeq(int, int, int); // in chessboardManager.cpp
 
-void Player::removePiece(Piece* removeThis) {
-	for (int i = 0; i < pieces.size(); i++) {
-		if (pieces[i] == removeThis) {
+void Player::removePiece(std::shared_ptr<Piece> removeThis) {
+	for (int i = 0; i < pieces.size(); i++)
+	{
+		if (pieces[i] == removeThis)
+		{
 			pieces.erase(pieces.begin() + i);
 			break;
 		}
 	}
 }
 
-Player::Player(int col) {
+Player::Player(Colors col) {
 	this->color = col;
 }
 
-void Player::initPieces(int color) {
-	if (color == WHITE) {
-		/* Pawns */
-		addPiece(new Piece(WHITE, PAWN, coordinates("A7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("B7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("C7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("D7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("E7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("F7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("G7")));
-		addPiece(new Piece(WHITE, PAWN, coordinates("H7")));
+void Player::initPieces() {
+	if (this->color == Colors::WHITE)
+	{
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("A7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("B7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("C7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("D7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("E7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("F7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("G7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("H7"))));
 
-		/* The rest */
-		addPiece(new Piece(WHITE, ROOK, coordinates("A8")));
-		addPiece(new Piece(WHITE, HORSE, coordinates("B8")));
-		addPiece(new Piece(WHITE, BISHOP, coordinates("C8")));
-		addPiece(new Piece(WHITE, QUEEN, coordinates("D8")));
-		addPiece(new Piece(WHITE, KING, coordinates("E8")));
-		addPiece(new Piece(WHITE, BISHOP, coordinates("F8")));
-		addPiece(new Piece(WHITE, HORSE, coordinates("G8")));
-		addPiece(new Piece(WHITE, ROOK, coordinates("H8")));
+		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("A8"))));
+		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("B8"))));
+		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("C8"))));
+		addPiece(std::make_shared<Queen>(Queen(this->color, Coordinates("D8"))));
+		addPiece(std::make_shared<King>(King(this->color, Coordinates("E8"))));
+		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("F8"))));
+		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("G8"))));
+		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("H8"))));
 	}
-	else { // Color == Black
-  /* Pawns */
-		addPiece(new Piece(BLACK, PAWN, coordinates("A2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("B2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("C2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("D2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("E2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("F2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("G2")));
-		addPiece(new Piece(BLACK, PAWN, coordinates("H2")));
+	else
+	{
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("A2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("B2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("C2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("D2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("E2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("F2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("G2"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("H2"))));
 
-		/* The rest */
-		addPiece(new Piece(BLACK, ROOK, coordinates("A1")));
-		addPiece(new Piece(BLACK, HORSE, coordinates("B1")));
-		addPiece(new Piece(BLACK, BISHOP, coordinates("C1")));
-		addPiece(new Piece(BLACK, QUEEN, coordinates("D1")));
-		addPiece(new Piece(BLACK, KING, coordinates("E1")));
-		addPiece(new Piece(BLACK, BISHOP, coordinates("F1")));
-		addPiece(new Piece(BLACK, HORSE, coordinates("G1")));
-		addPiece(new Piece(BLACK, ROOK, coordinates("H1")));
+		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("A1"))));
+		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("B1"))));
+		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("C1"))));
+		addPiece(std::make_shared<Queen>(Queen(this->color, Coordinates("D1"))));
+		addPiece(std::make_shared<King>(King(this->color, Coordinates("E1"))));
+		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("F1"))));
+		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("G1"))));
+		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("H1"))));
 	}
-
-	for (Piece* p : pieces)
-		p->setOwner(this);
 }
 
-vector<Piece*> Player::getPieces(void) {
+std::vector<std::shared_ptr<Piece>> Player::getPieces(void) {
 	return pieces;
 }
 
-void Player::copyPieces(vector<Piece*> oldPieces) {
+void Player::copyPieces(std::vector<std::shared_ptr<Piece>> oldPieces) {
 	pieces.clear();
-	for (int i = 0; i < oldPieces.size(); i++) {
-		coordinates oldCoords = oldPieces[i]->getCoordinates();
-		Piece* pieceCopy = new Piece(
-			oldPieces[i]->getColor(),
-			oldPieces[i]->getType(),
-			oldCoords);
+	for (int i = 0; i < oldPieces.size(); i++)
+	{
+		Coordinates oldCoords = oldPieces[i]->getCoordinates();
+
+		auto pieceCopy = oldPieces[i]->Clone();
+
 		pieceCopy->setCoordinates(oldCoords);
 		pieceCopy->setMoved(oldPieces[i]->isMoved());
 		pieces.push_back(pieceCopy);
@@ -89,27 +84,27 @@ void Player::copyPieces(vector<Piece*> oldPieces) {
 }
 
 Player::~Player() {
-	for (int i = 0; i < pieces.size(); i++)
-		delete pieces[i];
-
 	pieces.clear();
 }
 
-void Player::addPiece(Piece* piece) {
+void Player::addPiece(std::shared_ptr<Piece> piece) {
+	piece->setOwner(this);
 	pieces.push_back(piece);
 }
 
 void Player::printPieces(void) {
-	for (int i = 0; i < (int) pieces.size(); i++) {
-		std::cout << getPieces()[i]->getColor() << " " << getPieces()[i]->getType() << endl;
+	for (int i = 0; i < (int) pieces.size(); i++)
+	{
+		std::cout << static_cast<int>(getPieces()[i]->getColor()) << " " << static_cast<int>(getPieces()[i]->getType()) << std::endl;
 	}
 }
 
-string Player::toString() {
-	switch (color) {
-	case BLACK:
+std::string Player::toCharString() {
+	switch (color)
+	{
+	case Colors::BLACK:
 		return "PLAYER_BLACK";
-	case WHITE:
+	case Colors::WHITE:
 		return "PLAYER_WHITE";
 	default:
 		return "PLAYER_?";
@@ -128,13 +123,13 @@ void Player::setOpponent(Player* p) {
 	if (p != this)
 		opponent = p;
 	else
-		std::cout << "Cant set myself as an opponent!" << endl;
+		std::cout << "Cant set myself as an opponent!" << std::endl;
 }
 
 Player* Player::getOpponent() {
 	return opponent;
 }
 
-int Player::getColor(void) {
+Colors Player::getColor(void) {
 	return color;
 }

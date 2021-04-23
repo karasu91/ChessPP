@@ -2,41 +2,40 @@
 #include <string>
 #include <iostream>
 #include <vector>
-using namespace std;
 
 /* chessBoardManager.cpp */
-extern int convertColumnCharToIndex(string);
-extern int convertRowCharToIndex(string);
-extern string convertColumnIndexToChar(int);
-extern string convertRowIndexToChar(int);
+extern int convertColumnCharToIndex(std::string);
+extern int convertRowCharToIndex(std::string);
+extern std::string convertColumnIndexToChar(int);
+extern std::string convertRowIndexToChar(int);
 
-typedef struct coordinates {
+typedef struct Coordinates {
 private:
-	string _row = "";
-	string _column = "";
+	std::string _row = "";
+	std::string _column = "";
 public:
-	coordinates() {};
+	Coordinates() {};
 
-	coordinates(string str) {
+	Coordinates(std::string str) {
 		_column = str[0];
 		_row = str[1];
 	};
 
-	coordinates(string col, string r) {
+	Coordinates(std::string col, std::string r) {
 		_column = col;
 		_row = r;
 	}
 
-	coordinates(int col, int r) {
+	Coordinates(int col, int r) {
 		_column = convertColumnIndexToChar(col);
 		_row = convertRowIndexToChar(r);
 	}
 
-	string toBoardIndices() {
+	std::string toBoardIndices() {
 		return "" + convertColumnCharToIndex(_column) + convertRowCharToIndex(_row);
 	}
 
-	string toCharString() {
+	std::string toCharString() {
 		return "" + _column + _row;
 	}
 
@@ -47,11 +46,11 @@ public:
 	int getBoardRowIndex() {
 		return convertRowCharToIndex(_row);
 	}
-	bool operator ==(const coordinates& other) {
+	bool operator ==(const Coordinates& other) {
 		return this->_column == other._column && this->_row == other._row;
 	}
-	void operator =(coordinates src) {
+	void operator =(Coordinates src) {
 		this->_column = src._column;
 		this->_row = src._row;
 	}
-} coordinates;
+} Coordinates;

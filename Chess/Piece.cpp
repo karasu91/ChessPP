@@ -667,45 +667,37 @@ void King::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece
 	// Left up diagonal
 	std::vector<std::shared_ptr<Piece>> surroundingTiles;
 
-	if (col - 1 >= 0 && row - 1 >= 0)
-	{
+	if (col - 1 >= 0 && row - 1 >= 0)	
 		surroundingTiles.push_back(board[row - 1][col - 1]);
-	}
+	
 	// Left down diagonal
-	else if (col - 1 >= 0 && row + 1 <= 7)
-	{
+	if (col - 1 >= 0 && row + 1 <= 7)	
 		surroundingTiles.push_back(board[row + 1][col - 1]);
-	}
+	
 	// Right up diagonal
-	if (col + 1 <= 7 && row - 1 >= 0)
-	{
+	if (col + 1 <= 7 && row - 1 >= 0)	
 		surroundingTiles.push_back(board[row - 1][col + 1]);
-	}
+	
 	// Right down diagonal
-	if (col + 1 <= 7 && row + 1 <= 7)
-	{
+	if (col + 1 <= 7 && row + 1 <= 7)	
 		surroundingTiles.push_back(board[row + 1][col + 1]);
-	}
+	
 	// Left
-	if (col - 1 >= 0)
-	{
+	if (col - 1 >= 0)	
 		surroundingTiles.push_back(board[row][col - 1]);
-	}
+	
 	// Up
-	if (row - 1 >= 0)
-	{
+	if (row - 1 >= 0)	
 		surroundingTiles.push_back(board[row - 1][col]);
-	}
+
 	// Right
-	if (col + 1 <= 7)
-	{
+	if (col + 1 <= 7)	
 		surroundingTiles.push_back(board[row][col + 1]);
-	}
+	
 	// Down
-	if (row + 1 <= 7)
-	{
+	if (row + 1 <= 7)	
 		surroundingTiles.push_back(board[row + 1][col]);
-	}
+	
 
 	auto suitableTiles = filterNonKingableTiles(surroundingTiles);
 	for (int i = 0; i < suitableTiles.size(); i++)

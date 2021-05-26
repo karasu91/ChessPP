@@ -108,10 +108,29 @@ void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 	bool selection_ok = false;
 	
 	if ((row == 0 && pawn->getColor() == Colors::WHITE) || 
-		(row == 7 && pawn->getColor() == Colors::BLACK)) {
+		(row == 7 && pawn->getColor() == Colors::BLACK)) 
+	{
+		// Find the index in the owner player's list which contains the selected piece. This needs to be updated after the pointer has been upgraded.
+		Player* owner = pawn->getOwner();
+		auto pieces = owner->getPieces();
+		int ownerIndex = 0;
+
+		for (int i = 0; i < pieces.size(); i++)
+		{
+			if (pieces[i] == pawn)
+			{
+				ownerIndex = i;
+				break;
+			}
+		}
+
+
+
+
+
 		while (selection_ok == false)
 		{
-			std::cout << "Select piece type [P H B R Q]: " << std::endl;
+			std::cout << "Select piece type [H B R Q]: " << std::endl;
 			std::cin >> selection;
 
 			PieceType newType;
@@ -120,7 +139,7 @@ void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 				selection_ok = true;
 				break;
 			case 'H':
-				pawn = std::make_shared<Knight>(Knight(*pawn));
+				pawn = std::make_shared<Knight>(Knight(*pawn)); 
 				selection_ok = true;
 				break;
 			case 'B':
@@ -133,15 +152,21 @@ void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 				break;
 			case 'Q':				
 				pawn = std::make_shared<Queen>(Queen(*pawn));		
-				pawn.
 				selection_ok = true;
 				break;
 			default:
 				std::cout << "Invalid selection!" << std::endl;
 			}			
 		}	
+		// Update pointer in chessboard
 		_board[row][coords.getBoardColumnIndex()] = pawn;
+
+		// Then update owner's pointer
+		//owner->updatePieceAt(pawn, ownerIndex);
+		*(owner->getPieces())[ownerIndex] = *pawn;
+
 		std::cout << "Pawn is now upgraded to (on board): " << _board[row][coords.getBoardColumnIndex()]->toString() << std::endl;
+		std::cout << "Pawn is now upgraded to (on owner): " << owner->getPieces()[ownerIndex]->toString() << std::endl;
 		printBoard(_board, false);
 		updateGameState();
 	}
@@ -637,8 +662,8 @@ bool chessBoardManager::validateAndMove(Player* player, Coordinates startCoord, 
 		}
 
 		while (true) 
-			if (tryMove(tempPiece, targetCoord, false) == true) {
-
+			if (tryMove(tempPiece, targetCoord, false) == true) 
+			{
 				// Check if checkmate (start simulation process)
 				if (player->getOpponent()->isChecked() == true) {
 					bool isMate = checkForMate(player->getOpponent());
@@ -648,6 +673,7 @@ bool chessBoardManager::validateAndMove(Player* player, Coordinates startCoord, 
 						gameOver = true;
 					}
 				}
+				printBoard(_board, false);
 				turnNumber++;
 				return true;
 			}
@@ -763,8 +789,6 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 		}
 	}
 
-	std::cout << "Checking for mate status..." << std::endl;
-
 	Player* simCurrentPlayer = new Player(realPlayer->getColor());
 	Player* simOpponent = new Player(realPlayer->getOpponent()->getColor());
 
@@ -810,12 +834,10 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 			break;
 	}
 
-	printBoard(simBoardMgr->getBoard(), false);
 	simulationResult = isChecked;
 	std::cout << "================ END OF SIMULATION ================ " << std::endl;
 
 	/* if king is STILL threatened -> mate */
-
 	return simulationResult;
 }
 

@@ -107,7 +107,7 @@ class Queen : public virtual Piece {
 public:
 	Queen(Colors color, Coordinates coords) : Piece(color, PieceType::QUEEN, coords) {};
 	Queen(const Piece& piece) : Piece(piece, PieceType::QUEEN) {
-		std::cout << "constructing new Queen!" << std::endl;
+		std::cout << "Constructing new Queen!" << std::endl;
 	};
 	Queen(const std::shared_ptr<Piece> piece) : Piece(*piece, PieceType::QUEEN) {};
 	std::shared_ptr<Piece> Clone(void) {

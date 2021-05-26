@@ -18,6 +18,7 @@ public:
 	std::string toCharString();
 	//vector<string> getMoves(void);
 	std::vector<std::shared_ptr<Piece>> getPieces(void);
+	void updatePieceAt(std::shared_ptr<Piece>, int);
 	void copyPieces(std::vector<std::shared_ptr<Piece>>);
 	void setChecked(bool);
 	bool isChecked(void);

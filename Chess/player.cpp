@@ -69,6 +69,10 @@ std::vector<std::shared_ptr<Piece>> Player::getPieces(void) {
 	return pieces;
 }
 
+void Player::updatePieceAt(std::shared_ptr<Piece> p, int i) {
+	pieces[i] = p;
+}
+
 void Player::copyPieces(std::vector<std::shared_ptr<Piece>> oldPieces) {
 	pieces.clear();
 	for (int i = 0; i < oldPieces.size(); i++)

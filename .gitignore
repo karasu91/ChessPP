@@ -364,4 +364,4 @@ FodyWeavers.xsd
 *.ps1
 *.txt
 
-*.vscode/
+*/.vscode/

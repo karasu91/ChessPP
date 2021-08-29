@@ -365,3 +365,5 @@ FodyWeavers.xsd
 *.txt
 
 **/.vscode/
+
+main

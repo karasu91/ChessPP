@@ -3,7 +3,7 @@
 #include <string>
 #include "player.h"
 #include "coordinates.h"
-#include "chessBoard.h"
+#include "chessBoardManager.h"
 
 
 class Player;
@@ -23,31 +23,37 @@ public:
 	Player* currentPlayer = NULL;
 	chessBoardManager* mgr = NULL;
 	std::vector<std::vector<std::shared_ptr<Piece>>> board;
-	int autoPlayDelayMs = 250;
+	int autoPlayDelayMs = 1000;
 
 	bool game_script_multiples_moves_checkmate(void);
 	bool game_script_enpassant_test(void);
+	bool game_script_twopins_test(void);
+
 
 	void swapTurn() {
 		currentPlayer = currentPlayer->getOpponent();
 	}
-	bool playMove(std::string start, std::string end) {
+
+
+	bool playMove(std::string start, std::string end) 
+	{
+		
 		while (true)
 		{
 			start = convertToUpper(start);
 			end = convertToUpper(end);
 			if (mgr->validateAndMove(currentPlayer, Coordinates(start), Coordinates(end)) == true)
-			{
+			{				
+				mgr->updateGameState();
 				swapTurn();
+				//mgr->updateGameState();				
 				std::this_thread::sleep_for(std::chrono::milliseconds(autoPlayDelayMs));
 				return true;
 			}
-			else
+			else // Failed to move.
 			{
-				std::cout << "FIX THIS LATER ON!!!1" << std::endl;
-				std::cin.ignore();
+				return false;
 			}
-		}
-		return false;
+		}		
 	}
 };

@@ -1,7 +1,13 @@
-﻿#include <vector>
+﻿
+#include <vector>
 #include <thread>
-#include "chessBoard.h"
+#include "coordinates.h"
+#include "chessBoardManager.h"
 #include "Piece.h"
+#include "math.h"
+#include <sstream>
+
+
 
 
 // Between or equal
@@ -11,8 +17,10 @@ bool boeq(int compare, int lhs, int rhs) {
 
 chessBoardManager::chessBoardManager() {
 
+#if WINDOWS
 	if (_hConsoleHandle == NULL)
 		_hConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+#endif
 
 	for (int i = 0; i <= 7; i++)
 		_board.push_back(std::vector<std::shared_ptr<Piece>>(8));
@@ -31,57 +39,11 @@ chessBoardManager::~chessBoardManager() {
 	_players.clear();
 }
 
-int convertColumnCharToIndex(std::string column) {
-	if (column == "A")
-		return 0;
-	else if (column == "B")
-		return 1;
-	else if (column == "C")
-		return 2;
-	else if (column == "D")
-		return 3;
-	else if (column == "E")
-		return 4;
-	else if (column == "F")
-		return 5;
-	else if (column == "G")
-		return 6;
-	else if (column == "H")
-		return 7;
-	else
-		return 99;
-}
 
-std::string convertColumnIndexToChar(int index) {
-	switch (index) {
-	case 0:
-		return "A";
-	case 1:
-		return "B";
-	case 2:
-		return "C";
-	case 3:
-		return "D";
-	case 4:
-		return "E";
-	case 5:
-		return "F";
-	case 6:
-		return "G";
-	case 7:
-		return "H";
-	default:
-		throw std::runtime_error(std::string("Tried to convert index: ") + std::to_string(index));
-	}
-}
 
-int convertRowCharToIndex(std::string row) {
-	return atoi(row.c_str()) - 1;
-}
 
-std::string convertRowIndexToChar(int row) {
-	return std::to_string(row + 1);
-}
+
+
 // Initialize the board with players' pieces
 void chessBoardManager::initBoard(Player* p) {
 	
@@ -105,8 +67,8 @@ void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 	char selection;
 	Coordinates coords = pawn->getCoordinates();
 	int row = coords.getBoardRowIndex();
-	bool selection_ok = false;
 	
+
 	if ((row == 0 && pawn->getColor() == Colors::WHITE) || 
 		(row == 7 && pawn->getColor() == Colors::BLACK)) 
 	{
@@ -118,72 +80,87 @@ void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 		for (int i = 0; i < pieces.size(); i++)
 		{
 			if (pieces[i] == pawn)
-			{
+			{				
 				ownerIndex = i;
 				break;
 			}
 		}
 
-
-
-
-
-		while (selection_ok == false)
+		std::shared_ptr<Piece> newPiece;
+		while (true)
 		{
 			std::cout << "Select piece type [H B R Q]: " << std::endl;
 			std::cin >> selection;
 
 			PieceType newType;
-			switch (selection) {
-			case 'P':
-				selection_ok = true;
+			if (selection == 'P') {
 				break;
-			case 'H':
-				pawn = std::make_shared<Knight>(Knight(*pawn)); 
-				selection_ok = true;
+			}
+			else if (selection == 'H') {
+				newPiece = std::make_shared<Knight>(Knight(pawn));		
 				break;
-			case 'B':
-				pawn = std::make_shared<Bishop>(Bishop(*pawn));
-				selection_ok = true;
+			}
+			else if (selection == 'B') {
+				newPiece = std::make_shared<Bishop>(Bishop(pawn));		
 				break;
-			case 'R':
-				pawn = std::make_shared<Rook>(Rook(*pawn));
-				selection_ok = true;
+			}
+			else if (selection == 'R') {
+				newPiece = std::make_shared<Rook>(Rook(pawn));		
 				break;
-			case 'Q':				
-				pawn = std::make_shared<Queen>(Queen(*pawn));		
-				selection_ok = true;
+			}
+			else if (selection == 'Q') {		
+				newPiece = std::make_shared<Queen>(Queen(pawn));	
 				break;
-			default:
-				std::cout << "Invalid selection!" << std::endl;
-			}			
+			}
+			else
+				std::cout << "Invalid selection!" << std::endl;						
 		}	
-		// Update pointer in chessboard
-		_board[row][coords.getBoardColumnIndex()] = pawn;
 
-		// Then update owner's pointer
-		//owner->updatePieceAt(pawn, ownerIndex);
-		*(owner->getPieces())[ownerIndex] = *pawn;
+		_board[row][coords.getBoardColumnIndex()] = newPiece;
+		owner->updatePieceAt(newPiece, ownerIndex);
 
-		std::cout << "Pawn is now upgraded to (on board): " << _board[row][coords.getBoardColumnIndex()]->toString() << std::endl;
-		std::cout << "Pawn is now upgraded to (on owner): " << owner->getPieces()[ownerIndex]->toString() << std::endl;
-		printBoard(_board, false);
-		updateGameState();
+		// std::cout << "Pawn is now upgraded to (on board): " << _board[row][coords.getBoardColumnIndex()]->toString() << std::endl;
+		// std::cout << "Pawn is now upgraded to (on owner): " << owner->getPieces()[ownerIndex]->toString() << std::endl;
+		//printBoard(_board);
+		//updateGameState();
 	}
 }
 
 void chessBoardManager::updateGameState() {
+
+	printBoard(_board);
+	std::cout << "Updating game state..." << std::endl;
 	auto players = getPlayers();
 
-	// Assigns every threat into all pieces on the board
+	// Assigns every threat into all pieces on the board	
 	recalculatePieceThreats();
 
+	// for (int i = 0; i <= 7; i++) 
+	// 	for (int j = 0; j <= 7; j++) 
+	// 		_board[i][j]->resetPinInfo();
+
 	for (int i = 0; i < players.size(); i++)
+		for (auto &pc : players[i]->getPieces()) {
+			pc->clearAvailableMoves();
+			pc->resetPinInfo();
+		}
+
+	for (int i = 0; i < players.size(); i++) 
+		for (auto &pc : players[i]->getPieces()) 
+			pc->calculateAvailableMoves(_board);
+	
+	// for (int i = 0; i <= 7; i++) 
+	// 	for (int j = 0; j <= 7; j++) 
+	// 		_board[i][j]->calculateAvailableMoves(_board);			
+
+	for (int i = 0; i < players.size(); i++) {
 		updatePlayerCheckedStatus(players[i]);
+	}
+	std::cout << "Updating game state done." << std::endl;
+	
 }
 
-
-void chessBoardManager::setPieceTo(std::shared_ptr<Piece> piece, Coordinates finalCoords, bool simulate, bool updateState) {
+void chessBoardManager::setPieceTo(std::shared_ptr<Piece> piece, Coordinates finalCoords, bool simulate) {
 	auto startCoordinates = piece->getCoordinates();
 	int startRow = startCoordinates.getBoardRowIndex();
 	int startColumn = startCoordinates.getBoardColumnIndex();
@@ -191,31 +168,19 @@ void chessBoardManager::setPieceTo(std::shared_ptr<Piece> piece, Coordinates fin
 	int endColumn = finalCoords.getBoardColumnIndex();
 
 	if (!simulate) {
-#if _DEBUG
-		std::cout << "NOT simulating movement!" << std::endl;
-#endif
 		piece->setCoordinates(finalCoords);
 		piece->setMoved(true);
 
-		// Delete actual piece (that is not empty) board position
-		//if (_board[endRow][endColumn]->getType() != PieceType::EMPTY)
 		_board[endRow][endColumn] = piece;
-
-		// Move piece to the destination
-		//_board[endRow][endColumn] = std::move(piece);
-
 		// Assign empty tile to the piece's starting position now as it is free
 		_board[startRow][startColumn] = std::make_shared<EmptyPiece>(EmptyPiece(Coordinates(startColumn, startRow)));
 
-		if (updateState) {
-			printBoard(_board, false);
-			updateGameState();
-		}
+		// if (updateState) {
+		// 	updateGameState();
+		// }
 	}
 	else {
-#if _DEBUG
-		std::cout << "Simulating movement!" << std::endl;
-#endif
+
 		std::shared_ptr<Piece> cacheTargetTile = _board[endRow][endColumn];
 
 		piece->setCoordinates(finalCoords);
@@ -223,9 +188,6 @@ void chessBoardManager::setPieceTo(std::shared_ptr<Piece> piece, Coordinates fin
 		_board[endRow][endColumn] = piece;
 		_board[startRow][startColumn] = EmptyPiece(Coordinates(startColumn, startRow)).Clone();
 
-#if _NDEBUG
-		printBoard(_board, true);
-#endif
 		updateGameState();
 
 		//_board[startRow][startColumn].release();
@@ -241,9 +203,11 @@ void chessBoardManager::recalculatePieceThreats(void) {
 	PieceType type;
 	Colors color;
 
-	for (int i = 0; i <= 7; i++)
-		for (int j = 0; j <= 7; j++)
-			_board[i][j]->resetThreatVector();
+	for (int i = 0; i <= 7; i++) {
+		for (int j = 0; j <= 7; j++) {
+			_board[i][j]->resetThreatVector();				
+		}
+	}	
 
 	for (int i = 0; i <= 7; i++) {
 		for (int j = 0; j <= 7; j++) {
@@ -555,7 +519,7 @@ void chessBoardManager::recalculatePieceThreats(void) {
 
 // Returns true/false depending on whether the move was successful or not.
 bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target, bool simulate) {
-	piece->calculateAvailableMoves(_board);
+	//piece->calculateAvailableMoves(_board);
 	auto availableMoves = piece->getAvailableMoves();
 	auto pieceType = piece->getType();
 
@@ -568,7 +532,7 @@ bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target
 			// Make string indicator from the targeted tile so we can compare it with available moves
 			Coordinates targetTile = Coordinates(targetColumn, targetRow);
 
-#if _DEBUG
+//#if _DEBUG
 			std::cout << piece->toString() << " available moves: [";
 			for (int i = 0; i < availableMoves.size(); i++) {
 				std::cout << availableMoves[i].toCharString();
@@ -577,30 +541,32 @@ bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target
 			}
 
 			std::cout << "], target tile: " << targetTile.toCharString() << std::endl;
-#endif
+//#endif
 
 			// Check if the targeted tile is in available moves. If yes -> move
-			for (int i = 0; i < availableMoves.size(); i++) {
+			for (int i = 0; i < availableMoves.size(); i++) 
+			{
 				if (availableMoves[i] == targetTile) {
 					if (pieceType != PieceType::KING && pieceType != PieceType::PAWN) // avoid checking for castling or en passant
-						setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate, true);
+						setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate);
 
 					if (pieceType == PieceType::PAWN) {
 						int sd = piece->getColor() == Colors::WHITE ? -1 : 1; // scandirection
 						Coordinates coords = piece->getCoordinates();
 						bool movesTwo = abs(targetRow - coords.getBoardRowIndex()) == 2;
+
 						if (movesTwo)
 							piece->enPassantable = true;
+
 						// Do en passant move if possible
 						int pawnRow = targetRow - sd;
 						if (targetColumn != coords.getBoardColumnIndex() && _board[pawnRow][targetColumn]->enPassantable == true) {
 							_board[pawnRow][targetColumn].reset();
 							_board[pawnRow][targetColumn] = std::make_shared<EmptyPiece>(EmptyPiece(Coordinates(targetColumn, pawnRow)));
-							printBoard(_board, false);
-							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate, true);
+							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate);
 						}
 						else {
-							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate, true);
+							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate);
 							// Promote pawn check
 							upgradePawnCheck(piece);							
 						}
@@ -615,29 +581,27 @@ bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target
 						if (abs(targetColumn - piece->getCoordinates().getBoardColumnIndex()) == 2) {
 							std::cout << "Castling..." << std::endl;
 							// move king
-							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate, false);
+							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate);
 
 							// move rook
 							if (targetColumn == 2) {
-
-								setPieceTo(_board[targetRow][0], Coordinates(targetColumn + 1, targetRow), simulate, true);
+								setPieceTo(_board[targetRow][0], Coordinates(targetColumn + 1, targetRow), simulate);
 							}
 							else if (targetColumn == 6) {
-								setPieceTo(_board[targetRow][7], Coordinates(targetColumn - 1, targetRow), simulate, true);
+								setPieceTo(_board[targetRow][7], Coordinates(targetColumn - 1, targetRow), simulate);
 							}
 						}
 						else
-							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate, true);
+							setPieceTo(piece, Coordinates(targetColumn, targetRow), simulate);
 					}
 					return true;
 				}
-			}
+			} //! Check if the targeted tile is in available moves. If yes -> move
 			std::cout << "Invalid move!" << std::endl;
 			return false;
-		}
-		// Else break cycle
+		} //! If targeted tile is within board limits		
 		else {
-			std::cout << "Target selection is faulty!, try again! (out of bounds)" << std::endl;
+			std::cout << "Target selection is out of bounds!" << std::endl;
 		}
 	}
 	else {
@@ -647,38 +611,46 @@ bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target
 }
 
 bool chessBoardManager::validateAndMove(Player* player, Coordinates startCoord, Coordinates targetCoord) {
+
 	std::cout << "Turn: [" << turnNumber << "]" << std::endl;
-	int startrow = startCoord.getBoardRowIndex();
+
+	// 7 is because the board was flipped down at later stage in development.
+	int startrow = startCoord.getBoardRowIndex(); 	
 	int startColumn = startCoord.getBoardColumnIndex();
+
 	std::shared_ptr<Piece> tempPiece = getPiece(startrow, startColumn);
 
-	std::cout << player->toCharString() << " selecting piece from tile: " << startCoord.toCharString() << "(" << tempPiece->toString() << ")" << std::endl;
-	
+	std::cout << player->toCharString() << " selecting piece from tile: " << startCoord.toCharString() << " (" << tempPiece->toString() << ")" << std::endl;
+	std::cout << "Target tile: " << targetCoord.toCharString() << std::endl;
 
 	if (tempPiece != NULL) {
 		if (tempPiece->getColor() != player->getColor()) {
-			std::cout << "Selected piece is not valid!" << std::endl;
+			std::cout << "Selected piece is not valid! (Tried to select opponent's piece)" << std::endl;
 			return false;
 		}
 
 		while (true) 
+		{
 			if (tryMove(tempPiece, targetCoord, false) == true) 
 			{
 				// Check if checkmate (start simulation process)
-				if (player->getOpponent()->isChecked() == true) {
+				if (player->getOpponent()->isChecked() == true) {					
 					bool isMate = checkForMate(player->getOpponent());
 					std::cout << "Checkmate simulation result: " << isMate << std::endl;
+
 					if (isMate == true) {
 						player->isWinner = true;
 						gameOver = true;
 					}
-				}
-				printBoard(_board, false);
+				}			
 				turnNumber++;
 				return true;
 			}
-			else
+			else {
+				std::cout << "Failed to move.";
 				return false;
+			}
+		}
 		
 	}
 	return false;
@@ -710,67 +682,39 @@ std::vector<Player*> chessBoardManager::getPlayers() {
 }
 
 // Function for printing the game board every turn
-void chessBoardManager::printBoard(std::vector<std::vector<std::shared_ptr<Piece>>> board, bool simulation) {
-	
-	int simuColor = 3;
-	
+void chessBoardManager::printBoard(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
 
 	// TODO: ADD THREATS ON BOARD	
-#if _NDEBUG
-	SetConsoleCursorPosition(_hConsoleHandle, _resetCoordinates);
-#endif
-	//system("CLS");
-	if (simulation)
-		SetConsoleTextAttribute(_hConsoleHandle, 3);
+	std::stringstream stream;
 
-	std::cout << "\n\t\t  A  B  C  D  E  F  G  H" << std::endl;
-	int TILE_COLOR;
+	enum tileColors {
+		BLACK, RED, GREEN, YELLOW, BLUE, PURPLE, CYAN, WHITE
+	};
 
-	int COLOR_BLACK = 16;
-	int COLOR_WHITE = 23;
-	int COLOR_EVILRED = 4;
-	int COLOR_GREEN = 2;
+	int primaryColor = tileColors::RED;
+	int secondaryColor = tileColors::BLACK;
 
-	char pipe = (char) 179;
+	stream << "\033[3" << primaryColor << "m \n\t\t ABCDEFGH" << "\033[0m" << std::endl;
 
 	for (int i = 0; i <= 7; i++) {
+		stream << "\t\t" << "\033[3" << primaryColor << "m" << 8 - i << "\033[0m";
 		for (int j = 0; j <= 7; j++) {
-			std::shared_ptr<Piece> piece = board[i][j];
+			std::shared_ptr<Piece> piece = board[i][j];			
 
-			if ((j + i + 1) % 2 == 0)
-				TILE_COLOR = BACKGROUND_BLUE;
+			if ((i + j) % 2 == 0)
+				stream << "\033[4" << primaryColor << "m" << piece->getPieceIcon() << "\033[0m";
 			else
-				TILE_COLOR = BACKGROUND_BLUE | BACKGROUND_INTENSITY;
-
-			if (j == 0)
-				std::cout << "\t\t ";
-			if (piece->getType() == PieceType::EMPTY) {
-				SetConsoleTextAttribute(_hConsoleHandle, TILE_COLOR);
-				std::cout << "   ";
-			}
-			else {
-				switch (piece->getColor()) {
-				case Colors::WHITE:
-					SetConsoleTextAttribute(_hConsoleHandle, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | TILE_COLOR);
-					break;
-				case Colors::BLACK:
-					SetConsoleTextAttribute(_hConsoleHandle, TILE_COLOR);
-					break;
-				default:
-					SetConsoleTextAttribute(_hConsoleHandle, COLOR_BLACK | TILE_COLOR);
-				}
-				std::cout << " " << numToPiece(piece->getType()) << /* piece->getColor() */  " ";
-			}
-			if (simulation)
-				SetConsoleTextAttribute(_hConsoleHandle, 3); // light blue, cyan
-			else
-				SetConsoleTextAttribute(_hConsoleHandle, 15);
+				stream << "\033[4" << secondaryColor << "m" << piece->getPieceIcon() << "\033[0m";	
 			if (j == 7)
-				std::cout << " " << i + 1 << std::endl;
+				stream << "\033[3" << primaryColor << "m" << 8 - i << "\033[0m" << std::endl;
 		}
 	}
-	std::cout << std::endl;
-	std::cout << std::endl;
+	stream << "\033[3" << primaryColor << "m" <<  "\t\t ABCDEFGH" << "\033[0m" << std::endl;
+	stream << std::endl;
+	stream << std::endl;
+
+	std::system("clear");
+	std::cout << stream.str();
 }
 
 bool chessBoardManager::checkForMate(Player* realPlayer) {
@@ -851,22 +795,22 @@ std::string chessBoardManager::numToPiece(PieceType type) {
 		piece = "-";
 	}
 	if (type == PieceType::PAWN) {
-		piece = (char) 254;// pawn
+		piece = "♙";// pawn
 	}
 	if (type == PieceType::ROOK) {
-		piece = (char) 227; // rook
+		piece = "♖"; // rook
 	}
 	if (type == PieceType::KNIGHT) {
-		piece = (char) 226;// horse
+		piece = "♘";// horse
 	}
 	if (type == PieceType::BISHOP) {
-		piece = "X";// bishop
+		piece = "♗";// bishop
 	}
 	if (type == PieceType::QUEEN) {
-		piece = (char) 157;// queen
+		piece = "♕";// queen
 	}
 	if (type == PieceType::KING) {
-		piece = (char) 233; // king
+		piece = "♔"; // king
 	}
 	return piece;
 }
@@ -891,23 +835,24 @@ void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 	player->setChecked(kingThreatsCount > 0);
 }
 
-void chessBoardManager::calculateAllPossibleMoves(Player* p) {
-	auto color = p->getColor();
-	std::vector<Coordinates> moves;
-	std::vector<Coordinates> availableMoves;
+// void chessBoardManager::calculateAllPossibleMoves(Player* p) {
+// 	auto color = p->getColor();
+// 	std::vector<Coordinates> moves;
+// 	std::vector<Coordinates> availableMoves;
 
-	std::cout << "updating all possible moves for player " << std::to_string(static_cast<int>(p->getColor())) << std::endl;
-	for (int i = 0; i <= 7; i++) {
-		for (int j = 0; j <= 7; j++) {
-			if (_board[i][j]->getColor() == color) {
-				std::shared_ptr<Piece> piece = _board[i][j];
+// 	//std::cout << "updating all possible moves for player " << std::to_string(static_cast<int>(p->getColor())) << std::endl;
+	
+// 	for (int i = 0; i <= 7; i++) {
+// 		for (int j = 0; j <= 7; j++) {
+// 			if (_board[i][j]->getColor() == color) {
+// 				std::shared_ptr<Piece> piece = _board[i][j];
 
-				// Get piece's possible movements
-				piece->calculateAvailableMoves(_board);
-				availableMoves = piece->getAvailableMoves();
-				moves.insert(moves.end(), availableMoves.begin(), availableMoves.end());
-				piece->setAvailableMoves(moves);
-			}
-		}
-	}
-}
+// 				// Get piece's possible movements
+// 				piece->calculateAvailableMoves(_board);
+// 				availableMoves = piece->getAvailableMoves();
+// 				moves.insert(moves.end(), availableMoves.begin(), availableMoves.end());
+// 				piece->setAvailableMoves(moves);
+// 			}
+// 		}
+// 	}
+// }

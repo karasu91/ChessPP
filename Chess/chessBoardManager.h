@@ -1,7 +1,7 @@
 #pragma once
 #include "defines.h"
 #include "coordinates.h"
-#include <Windows.h>
+//#include <Windows.h>
 #include "Piece.h"
 
 class Player;
@@ -12,10 +12,10 @@ public:
 	~chessBoardManager();
 	std::string numToPiece(PieceType);
 	void initBoard(Player*);
-	void printBoard(std::vector<std::vector<std::shared_ptr<Piece>>>, bool);
-	void setPieceTo(std::shared_ptr<Piece>, Coordinates, bool simulate, bool updateState);
+	void printBoard(std::vector<std::vector<std::shared_ptr<Piece>>>);
+	void setPieceTo(std::shared_ptr<Piece>, Coordinates, bool simulate);
 	void updatePlayerCheckedStatus(Player*);
-	void calculateAllPossibleMoves(Player*);  // Check every possible player's move
+	//void calculateAllPossibleMoves(Player*);  // Check every possible player's move
 	bool checkForMate(Player*);
 	void recalculatePieceThreats(void);
 	bool tryMove(std::shared_ptr<Piece> piece, Coordinates target, bool simulate);
@@ -27,11 +27,12 @@ public:
 	void addPlayer(Player*);
 	std::vector<Player*> getPlayers();
 	void updateGameState();
+	void cleanPieceData();
 	bool gameOver = false;
 	unsigned turnNumber = 0;
 private:
-	COORD _resetCoordinates = {0, 0};
-	HANDLE _hConsoleHandle = NULL;
+	// _resetCoordinates = {0, 0};
+	//HANDLE _hConsoleHandle = NULL;
 	std::vector<std::vector<std::shared_ptr<Piece>>> _board;
 	std::vector<Player*> _players;
 };

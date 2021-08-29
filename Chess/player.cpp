@@ -1,5 +1,6 @@
 ﻿#include <string>
 #include <locale>
+#include <memory>
 #include "player.h"
 #include "Piece.h"
 
@@ -25,26 +26,6 @@ Player::Player(Colors col) {
 void Player::initPieces() {
 	if (this->color == Colors::WHITE)
 	{
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("A7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("B7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("C7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("D7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("E7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("F7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("G7"))));
-		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("H7"))));
-
-		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("A8"))));
-		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("B8"))));
-		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("C8"))));
-		addPiece(std::make_shared<Queen>(Queen(this->color, Coordinates("D8"))));
-		addPiece(std::make_shared<King>(King(this->color, Coordinates("E8"))));
-		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("F8"))));
-		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("G8"))));
-		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("H8"))));
-	}
-	else
-	{
 		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("A2"))));
 		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("B2"))));
 		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("C2"))));
@@ -62,6 +43,26 @@ void Player::initPieces() {
 		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("F1"))));
 		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("G1"))));
 		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("H1"))));
+	}
+	else
+	{
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("A7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("B7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("C7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("D7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("E7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("F7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("G7"))));
+		addPiece(std::make_shared<Pawn>(Pawn(this->color, Coordinates("H7"))));
+
+		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("A8"))));
+		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("B8"))));
+		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("C8"))));
+		addPiece(std::make_shared<Queen>(Queen(this->color, Coordinates("D8"))));
+		addPiece(std::make_shared<King>(King(this->color, Coordinates("E8"))));
+		addPiece(std::make_shared<Bishop>(Bishop(this->color, Coordinates("F8"))));
+		addPiece(std::make_shared<Knight>(Knight(this->color, Coordinates("G8"))));
+		addPiece(std::make_shared<Rook>(Rook(this->color, Coordinates("H8"))));
 	}
 }
 

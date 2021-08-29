@@ -1,5 +1,6 @@
 #include "defines.h"
 #include "Piece.h"
+#include <memory>
 
 
 
@@ -34,8 +35,18 @@ Piece::Piece(const Piece& p, PieceType type) {
 	_enemyColor = p._enemyColor;
 
 	_type = type;
+}
 
-	int a = 1;
+Piece::Piece(std::shared_ptr<Piece> p, PieceType type) {
+
+	_color = p->_color;
+	_type = p->_type;
+	_hasMoved = p->_hasMoved;
+	_coords = p->_coords;
+	_owner = p->_owner;
+	_enemyColor = p->_enemyColor;
+
+	_type = type;
 }
 
 Piece::~Piece() {
@@ -65,6 +76,46 @@ void Piece::setCoordinates(const Coordinates& coords) {
 	_coords = coords;
 }
 
+std::string Piece::getPieceIcon() 
+{	  
+	switch (_color) // 
+	{
+		case Colors::WHITE:
+		if (this->_type == PieceType::BISHOP)
+			return "♗";
+		else if (this->_type == PieceType::KNIGHT)
+			return "♘";
+		else if (this->_type == PieceType::QUEEN)
+			return "♕";
+		else if (this->_type == PieceType::KING)
+			return "♔";
+		else if (this->_type == PieceType::ROOK)
+			return "♖";
+		else if (this->_type == PieceType::PAWN)
+			return "♙";
+
+		case Colors::BLACK:
+		if (this->_type == PieceType::BISHOP)
+			return "♝";
+		else if (this->_type == PieceType::KNIGHT)
+			return "♞";
+		else if (this->_type == PieceType::QUEEN)
+			return "♛";
+		else if (this->_type == PieceType::KING)
+			return "♚";
+		else if (this->_type == PieceType::ROOK)
+			return "♜";
+		else if (this->_type == PieceType::PAWN)
+			return "♟";
+
+		case Colors::EMPTY:
+           return " ";
+
+		default:
+			return "NA";
+	}
+}
+
 void Piece::operator=(const Piece& right) {
 
 	this->_availableMoves = right._availableMoves;
@@ -75,8 +126,33 @@ void Piece::operator=(const Piece& right) {
 	this->_hasMoved = right._hasMoved;
 }
 
+
+
 Player* Piece::getOwner() {
 	return _owner;
+}
+
+bool Piece::setPinInfo(std::vector<Coordinates> pinVector, std::shared_ptr<Piece> by) 
+{
+	/* avoid pin propagation infinite loop (e.g. two queens protect their kings) */
+	if (pinIt > 0)
+		return false;
+
+	pinIt++;
+	pinnedBy = by;
+	_pinVector.assign(pinVector.begin(), pinVector.end());	
+	//std::cout << this->toString() << " is binned by: " << by->toString() << std::endl;
+
+	return true;
+}
+
+
+void Piece::resetPinInfo(void) {
+	//std::cout << "Resetting pin info for piece: " << this->toString() << std::endl;
+	pinIt = 0;
+	pinChecks = 0;
+	pinnedBy = NULL;
+	_pinVector.clear();
 }
 
 void Piece::resetThreatVector(void) {
@@ -92,6 +168,7 @@ void Piece::convertTo(std::shared_ptr<Piece> p) {
 }
 
 void Piece::clearAvailableMoves() {
+	hasCalculated = false;
 	_availableMoves.clear();
 }
 
@@ -185,13 +262,58 @@ void Piece::setMoved(bool state) {
 
 extern bool boeq(int, int, int);
 
+void Piece::checkPins() 
+{
+	// Avoid duplicate calculations in propagation states
+	if (pinChecks > 0)
+		return;
+
+	//std::cout << "Checking pinned status for piece: " << this->toString() << " at: " << this->getCoordinates().toCharString() << std::endl;
+	if (pinnedBy != NULL) 
+	{		
+		std::cout << "Piece is pinned! : " << this->toString() << std::endl;
+		std::vector<Coordinates> pinMoves;
+		for (int i = 0; i < _pinVector.size(); i++) 
+		{			
+			for (int y = 0; y < _availableMoves.size(); y++) 
+			{
+				if (_availableMoves[y].toCharString() == _pinVector[i].toCharString()) 
+				{
+					// Only push unique values
+					if (std::find(pinMoves.begin(), pinMoves.end(), _availableMoves[y]) == pinMoves.end()) 
+						pinMoves.push_back(_availableMoves[y]);
+				}
+			}
+		}
+		
+		_availableMoves.clear();
+		for (int i = 0; i < pinMoves.size(); i++)
+			_availableMoves.push_back(pinMoves[i]);		
+		
+		std::cout << this->toString() << " available moves in pinned state: ";
+		for (auto &x : _availableMoves) {
+			std::cout << x.toCharString() << " ";
+		}
+		std::cout << std::endl;		
+
+		pinChecks++;
+	}	
+	
+}
+
+
 void Pawn::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
-	_availableMoves.clear();
+
+	if (hasCalculated)
+		return;
+
 	int sd = _color == Colors::WHITE ? -1 : 1; // scandirection (white moves top, black moves down)
 	int row = _coords.getBoardRowIndex();
 	int col = _coords.getBoardColumnIndex();
 	Coordinates coords = _coords;
-	Colors color = _color;
+	Colors color = _color;	
+	_availableMoves.clear();
+
 	if (boeq(row + sd, 0, 7))
 	{
 		// one or two moves to front
@@ -241,95 +363,199 @@ void Pawn::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece
 			if (board[row][col + 1]->getColor() == _enemyColor && board[row][col + 1]->enPassantable == true)
 				_availableMoves.push_back(Coordinates(col + 1, row + sd));
 		}
+		checkPins();
 	}
 }
 
 void Rook::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
 
+
 	_availableMoves.clear();
 	int row = _coords.getBoardRowIndex();
 	int col = _coords.getBoardColumnIndex();
-
+	std::vector<Coordinates> tPinVector;
 	for (int i = 1; i <= 7; i++)
-	{
+	{		
 		// Left
 		if (col - i >= 0)
 		{
-			if (board[row][col - i]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col - i, row));
-
+			auto &pc = board[row][col - i];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row][col - i]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col - i, row));
+					tPinVector.push_back(Coordinates(col - i, row));
+				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col - i, row));
+					tPinVector.push_back(Coordinates(col - i, row));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i - 1; col - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row][col - backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Rook>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col - backOffset, row));				
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Right
 		if (col + i <= 7)
 		{
-			if (board[row][col + i]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col + i, row));
+			auto &pc = board[row][col + i];
+
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row][col + i]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col + i, row));
+					tPinVector.push_back(Coordinates(col + i, row));
+					continue;
+				}
+
 				else
 				{
 					_availableMoves.push_back(Coordinates(col + i, row));
+					tPinVector.push_back(Coordinates(col + i, row));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + i; col + backOffset <= 7 && col + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row][col + backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Rook>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col + backOffset, row));												
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Up
 		if (row - i >= 0)
 		{
-			if (board[row - i][col]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col, row - i));
+			auto &pc = board[row - i][col];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row - i][col]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col, row - i));
+					tPinVector.push_back(Coordinates(col, row - i));
+					continue;
+				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col, row - i));
+					tPinVector.push_back(Coordinates(col, row - i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row - backOffset][col];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Rook>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col, row - backOffset));													
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Down
 		if (row + i <= 7)
 		{
-			if (board[row + i][col]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col, row + i));
+			auto &pc = board[row + i][col];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row + i][col]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col, row + i));
+					tPinVector.push_back(Coordinates(col, row + i));
+					continue;
+				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col, row + i));
+					tPinVector.push_back(Coordinates(col, row + i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row + backOffset][col];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Rook>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col, row + backOffset));												
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+
+	checkPins();
 }
 
 void Knight::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
+
 
 	_availableMoves.clear();
 	int row = _coords.getBoardRowIndex();
@@ -367,293 +593,560 @@ void Knight::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Pie
 	if (col + 1 <= 7 && row + 2 <= 7)
 		if (board[row + 2][col + 1]->getColor() != _color)
 			_availableMoves.push_back(Coordinates(col + 1, row + 2));
+
+	checkPins();
 }
 
 void Bishop::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
 
-	std::cout << "Calculating available moves for QUEEN piece type!" << std::endl;
 	_availableMoves.clear();
 	int row = _coords.getBoardRowIndex();
 	int col = _coords.getBoardColumnIndex();
+	std::vector<Coordinates> tPinVector;
 
 	// Left up diagonal
 	for (int i = 1; i <= 7; i++)
 	{
-
 		if (col - i >= 0 && row - i >= 0)
 		{
-			if (board[row - i][col - i]->getType() == PieceType::EMPTY)
+			auto &pc = board[row - i][col - i];
+			if (pc->getColor() == _color)
 			{
-				_availableMoves.push_back(Coordinates(col - i, row - i));
+				break;
 			}
 			else
 			{
-				if (board[row - i][col - i]->getColor() == _color)
+				if (pc->getType() == PieceType::EMPTY)
 				{
-					break;
+					_availableMoves.push_back(Coordinates(col - i, row - i));
+					tPinVector.push_back(Coordinates(col - i, row - i));
+					continue;
 				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col - i, row - i));
+					tPinVector.push_back(Coordinates(col - i, row - i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row - backOffset >= 0 && col - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row - backOffset][col - backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Bishop>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col - backOffset, row - backOffset));													
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Right up diagonal
 		if (col + i <= 7 && row - i >= 0)
 		{
-			if (board[row - i][col + i]->getType() == PieceType::EMPTY)
+			auto &pc = board[row - i][col + i];
+			if (pc->getColor() == _color)
 			{
-				_availableMoves.push_back(Coordinates(col + i, row - i));
+				break;
 			}
 			else
 			{
-				if (board[row - i][col + i]->getColor() == _color)
-				{
-					break;
-				}
-				else
+				if (pc->getType() == PieceType::EMPTY)
 				{
 					_availableMoves.push_back(Coordinates(col + i, row - i));
+					tPinVector.push_back(Coordinates(col + i, row - i));
+					continue;
+				}
+				else // not empty nor own piece = enemy piece
+				{
+					_availableMoves.push_back(Coordinates(col + i, row - i));
+					tPinVector.push_back(Coordinates(col + i, row - i));
+
+					// check for if the enemy piece is pinned
+                    for (int backOffset = i + 1; row - backOffset >= 0 && col + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row - backOffset][col + backOffset];
+						// if piece behind is an enemy king, we assign the pin.
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Bishop>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col + backOffset, row - backOffset));					
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Right down diagonal
 		if (col + i <= 7 && row + i <= 7)
 		{
-			if (board[row + i][col + i]->getType() == PieceType::EMPTY)
-			{
-				_availableMoves.push_back(Coordinates(col + i, row + i));
-			}
+			auto &pc = board[row + i][col + i];
+			if (pc->getColor() == _color)
+				break;
+
 			else
 			{
-				if (board[row + i][col + i]->getColor() == _color)
+				if (pc->getType() == PieceType::EMPTY)
 				{
-					break;
+					_availableMoves.push_back(Coordinates(col + i, row + i));
+					tPinVector.push_back(Coordinates(col + i, row + i));
+					continue;
 				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col + i, row + i));
+					tPinVector.push_back(Coordinates(col + i, row + i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row + backOffset <= 7 && col + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row + backOffset][col + backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Bishop>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col + backOffset, row + backOffset));											
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Left down diagonal
 		if (col - i >= 0 && row + i <= 7)
 		{
-			if (board[row + i][col - i]->getType() == PieceType::EMPTY)
-			{
-				_availableMoves.push_back(Coordinates(col - i, row + i));
-			}
+			auto &pc = board[row + i][col - i];
+
+			if (pc->getColor() == _color)
+				break;
+				
 			else
 			{
-				if (board[row + i][col - i]->getColor() == _color)
+				if (pc->getType() == PieceType::EMPTY)
 				{
-					break;
+					_availableMoves.push_back(Coordinates(col - i, row + i));	
+					tPinVector.push_back(Coordinates(col - i, row + i));
+					continue;
 				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col - i, row + i));
+					tPinVector.push_back(Coordinates(col - i, row + i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row + backOffset <= 7 && col - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row + backOffset][col - backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Bishop>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col - backOffset, row + backOffset));												
+						}
+						else
+							break;
+					}
+
 					break;
 				}
 			}
 		}
 	}
+	checkPins();
 }
-
 
 void Queen::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
 
-	std::cout << "Calculating available moves for Queen at " << _coords.toCharString() << std::endl;
+	//std::cout << "Calculating available moves for Queen: " << this->toString() << " at: " << this->getCoordinates().toCharString() << std::endl;
 	_availableMoves.clear();
 	int row = _coords.getBoardRowIndex();
 	int col = _coords.getBoardColumnIndex();
-
-	// Left up diagonal
+	std::vector<Coordinates> tPinVector;
 	for (int i = 1; i <= 7; i++)
-	{
-		if (col - i >= 0 && row - i >= 0)
-		{
-			if (board[row - i][col - i]->getType() == PieceType::EMPTY)
-			{
-				_availableMoves.push_back(Coordinates(col - i, row - i));
-			}
-			else
-			{
-				if (board[row - i][col - i]->getColor() == _color)
-				{
-					break;
-				}
-				else
-				{
-					_availableMoves.push_back(Coordinates(col - i, row - i));
-					break;
-				}
-			}
-		}
-	}
-	for (int i = 1; i <= 7; i++)
-	{
-		// Right up diagonal
-		if (col + i <= 7 && row - i >= 0)
-		{
-			if (board[row - i][col + i]->getType() == PieceType::EMPTY)
-			{
-				_availableMoves.push_back(Coordinates(col + i, row - i));
-			}
-			else
-			{
-				if (board[row - i][col + i]->getColor() == _color)
-				{
-					break;
-				}
-				else
-				{
-					_availableMoves.push_back(Coordinates(col + i, row - i));
-					break;
-				}
-			}
-		}
-	}
-	for (int i = 1; i <= 7; i++)
-	{
-		// Right down diagonal
-		if (col + i <= 7 && row + i <= 7)
-		{
-			if (board[row + i][col + i]->getType() == PieceType::EMPTY)
-			{
-				_availableMoves.push_back(Coordinates(col + i, row + i));
-			}
-			else
-			{
-				if (board[row + i][col + i]->getColor() == _color)
-				{
-					break;
-				}
-				else
-				{
-					_availableMoves.push_back(Coordinates(col + i, row + i));
-					break;
-				}
-			}
-		}
-	}
-	for (int i = 1; i <= 7; i++)
-	{
-		// Left down diagonal
-		if (col - i >= 0 && row + i <= 7)
-		{
-			if (board[row + i][col - i]->getType() == PieceType::EMPTY)
-			{
-				_availableMoves.push_back(Coordinates(col - i, row + i));
-			}
-			else
-			{
-				if (board[row + i][col - i]->getColor() == _color)
-				{
-					break;
-				}
-				else
-				{
-					_availableMoves.push_back(Coordinates(col - i, row + i));
-					break;
-				}
-			}
-		}
-	}
-
-
-	for (int i = 1; i <= 7; i++)
-	{
+	{		
 		// Left
 		if (col - i >= 0)
 		{
-			if (board[row][col - i]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col - i, row));
-
+			auto &pc = board[row][col - i];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row][col - i]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col - i, row));
+					tPinVector.push_back(Coordinates(col - i, row));
+					continue;
+				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col - i, row));
+					tPinVector.push_back(Coordinates(col - i, row));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; col - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row][col - backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col - backOffset, row));				
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Right
 		if (col + i <= 7)
 		{
-			if (board[row][col + i]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col + i, row));
+			auto &pc = board[row][col + i];
+
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row][col + i]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col + i, row));
+					tPinVector.push_back(Coordinates(col + i, row));
+					continue;
+				}
+
 				else
 				{
 					_availableMoves.push_back(Coordinates(col + i, row));
+					tPinVector.push_back(Coordinates(col + i, row));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + i; col + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row][col + backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col + backOffset, row));												
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Up
 		if (row - i >= 0)
 		{
-			if (board[row - i][col]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col, row - i));
+			auto &pc = board[row - i][col];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row - i][col]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col, row - i));
+					tPinVector.push_back(Coordinates(col, row - i));
+					continue;
+				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col, row - i));
+					tPinVector.push_back(Coordinates(col, row - i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row - backOffset][col];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col, row - backOffset));													
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
 	for (int i = 1; i <= 7; i++)
 	{
 		// Down
 		if (row + i <= 7)
 		{
-			if (board[row + i][col]->getType() == PieceType::EMPTY)
-				_availableMoves.push_back(Coordinates(col, row + i));
+			auto &pc = board[row + i][col];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
 			else
 			{
-				if (board[row + i][col]->getColor() == _color)
-					break;
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col, row + i));
+					tPinVector.push_back(Coordinates(col, row + i));
+					continue;
+				}
 				else
 				{
 					_availableMoves.push_back(Coordinates(col, row + i));
+					tPinVector.push_back(Coordinates(col, row + i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row + backOffset][col];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col, row + backOffset));												
+						}
+						else
+							break;
+					}
 					break;
 				}
 			}
 		}
 	}
+	tPinVector.clear();
+	// Left up diagonal
+	for (int i = 1; i <= 7; i++)
+	{
+		if (col - i >= 0 && row - i >= 0)
+		{
+			auto &pc = board[row - i][col - i];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
+			else
+			{
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col - i, row - i));
+					tPinVector.push_back(Coordinates(col - i, row - i));
+					continue;
+				}
+				else
+				{
+					_availableMoves.push_back(Coordinates(col - i, row - i));
+					tPinVector.push_back(Coordinates(col - i, row - i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row - backOffset >= 0 && col - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row - backOffset][col - backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col - backOffset, row - backOffset));													
+						}
+						else
+							break;
+					}
+					break;
+				}
+			}
+		}
+	}
+	tPinVector.clear();
+	for (int i = 1; i <= 7; i++)
+	{
+		// Right up diagonal
+		if (col + i <= 7 && row - i >= 0)
+		{
+			auto &pc = board[row - i][col + i];
+			if (pc->getColor() == _color)
+			{
+				break;
+			}
+			else
+			{
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col + i, row - i));
+					tPinVector.push_back(Coordinates(col + i, row - i));
+					continue;
+				}
+				else // not empty nor own piece = enemy piece
+				{
+					_availableMoves.push_back(Coordinates(col + i, row - i));
+					tPinVector.push_back(Coordinates(col + i, row - i));
 
-	//((Bishop*) this)->calculateAvailableMoves(board);
-	//((Rook*) this)->calculateAvailableMoves(board);
-	//
+					// check for if the enemy piece is pinned
+                    for (int backOffset = i + 1; row - backOffset >= 0 && col + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row - backOffset][col + backOffset];
+						// if piece behind is an enemy king, we assign the pin.
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col + backOffset, row - backOffset));					
+						}
+						else
+							break;
+					}
+					break;
+				}
+			}
+		}
+	}
+	tPinVector.clear();
+	for (int i = 1; i <= 7; i++)
+	{
+		// Right down diagonal
+		if (col + i <= 7 && row + i <= 7)
+		{
+			auto &pc = board[row + i][col + i];
+			if (pc->getColor() == _color)
+				break;
+
+			else
+			{
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col + i, row + i));
+					tPinVector.push_back(Coordinates(col + i, row + i));
+					continue;
+				}
+				else
+				{
+					_availableMoves.push_back(Coordinates(col + i, row + i));
+					tPinVector.push_back(Coordinates(col + i, row + i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row + backOffset <= 7 && col + backOffset <= 7; backOffset++)
+					{
+						auto &pieceBehind = board[row + backOffset][col + backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col + backOffset, row + backOffset));											
+						}
+						else
+							break;
+					}
+					break;
+				}
+			}
+		}
+	}
+	tPinVector.clear();
+	for (int i = 1; i <= 7; i++)
+	{
+		// Left down diagonal
+		if (col - i >= 0 && row + i <= 7)
+		{
+			auto &pc = board[row + i][col - i];
+
+			if (pc->getColor() == _color)
+				break;
+				
+			else
+			{
+				if (pc->getType() == PieceType::EMPTY)
+				{
+					_availableMoves.push_back(Coordinates(col - i, row + i));	
+					tPinVector.push_back(Coordinates(col - i, row + i));
+					continue;
+				}
+				else
+				{
+					_availableMoves.push_back(Coordinates(col - i, row + i));
+					tPinVector.push_back(Coordinates(col - i, row + i));
+					// check for if the above enemy piece is pinned
+                    for (int backOffset = i + 1; row + backOffset <= 7 && col - backOffset >= 0; backOffset++)
+					{
+						auto &pieceBehind = board[row + backOffset][col - backOffset];
+						if (pieceBehind->getType() == PieceType::KING && pieceBehind->getColor() != _color) {
+							tPinVector.push_back(_coords);
+							if (pc->setPinInfo(tPinVector, std::make_shared<Queen>(*this)))
+								pc->calculateAvailableMoves(board);
+							break;
+						}
+						else if (pieceBehind->getType() == PieceType::EMPTY) {
+							tPinVector.push_back(Coordinates(col - backOffset, row + backOffset));												
+						}
+						else
+							break;
+					}
+
+					break;
+				}
+			}
+		}
+	}
+	checkPins();
 };
 
 

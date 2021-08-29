@@ -1,7 +1,5 @@
 #pragma once
-#include "defines.h"
 #include "coordinates.h"
-//#include <Windows.h>
 #include "Piece.h"
 
 class Player;

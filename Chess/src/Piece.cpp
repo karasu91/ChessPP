@@ -1,4 +1,4 @@
-#include "defines.h"
+
 #include "Piece.h"
 #include <memory>
 

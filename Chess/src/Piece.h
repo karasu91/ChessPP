@@ -4,7 +4,6 @@
 #include <vector>
 #include <memory>
 #include "coordinates.h"
-#include "defines.h"
 #include "player.h"
 
 enum class Colors;

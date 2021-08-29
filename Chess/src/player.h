@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include "defines.h"
 
 
 class Piece;

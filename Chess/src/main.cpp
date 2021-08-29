@@ -7,14 +7,11 @@
 #include <vector>
 #include <chrono>
 #include <thread>
-#include "defines.h"
 #include "chessBoardManager.h"
 #include "scriptEngine.h"
 #include "Piece.h"
 
 #define DEMO_MODE 1;
-#define WINDOWS false;
-
 
 void initGame(void);
 

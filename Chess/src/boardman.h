@@ -1,14 +1,14 @@
 #pragma once
 #include "coordinates.h"
-#include "Piece.h"
+#include "piece.h"
 #include "net.h"
 
 class Player;
 
-class chessBoardManager{
+class Boardman{
 public:
-	chessBoardManager();
-	~chessBoardManager();
+	Boardman();
+	~Boardman();
 	std::string numToPiece(PieceType);
 	void initBoard(Player*);
 	void printBoard(std::vector<std::vector<std::shared_ptr<Piece>>>);

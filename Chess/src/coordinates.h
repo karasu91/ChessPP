@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 
-/* chessBoardManager.cpp */
+/* boardman.cpp */
 extern int convertColumnCharToIndex(std::string);
 extern int convertRowCharToIndex(std::string);
 

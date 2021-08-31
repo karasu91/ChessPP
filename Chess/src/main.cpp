@@ -7,9 +7,9 @@
 #include <vector>
 #include <chrono>
 #include <thread>
-#include "chessBoardManager.h"
+#include "boardman.h"
 #include "engine.h"
-#include "Piece.h"
+#include "piece.h"
 
 #define DEMO_MODE 1;
 
@@ -31,7 +31,7 @@ void initGame(std::string lport, std::string tport) {
 	Coordinates start;
 	Coordinates end;
 
-	chessBoardManager * pBoardManager = new chessBoardManager();;
+	Boardman * pBoardManager = new Boardman();
 	
 	Engine game;
 

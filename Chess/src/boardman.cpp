@@ -2,8 +2,8 @@
 #include <vector>
 #include <thread>
 #include "coordinates.h"
-#include "chessBoardManager.h"
-#include "Piece.h"
+#include "boardman.h"
+#include "piece.h"
 #include "math.h"
 #include <sstream>
 
@@ -15,7 +15,7 @@ bool boeq(int compare, int lhs, int rhs) {
 	return compare >= lhs && compare <= rhs;
 }
 
-chessBoardManager::chessBoardManager() {
+Boardman::Boardman() {
 
 #if WINDOWS
 	if (_hConsoleHandle == NULL)
@@ -33,7 +33,7 @@ chessBoardManager::chessBoardManager() {
 	}
 }
 
-chessBoardManager::~chessBoardManager() {
+Boardman::~Boardman() {
 	for (int i = 0; i < _players.size(); i++)
 		delete _players[i];
 	_players.clear();
@@ -45,7 +45,7 @@ chessBoardManager::~chessBoardManager() {
 
 
 // Initialize the board with players' pieces
-void chessBoardManager::initBoard(Player* p) {
+void Boardman::initBoard(Player* p) {
 	
 	auto playerPieces = p->getPieces();
 
@@ -59,11 +59,11 @@ void chessBoardManager::initBoard(Player* p) {
 	int a = 1;
 }
 
-std::shared_ptr<Piece> chessBoardManager::getPiece(int row, int column) {
+std::shared_ptr<Piece> Boardman::getPiece(int row, int column) {
 	return _board[row][column];
 }
 
-void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
+void Boardman::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 	char selection;
 	Coordinates coords = pawn->getCoordinates();
 	int row = coords.getBoardRowIndex();
@@ -126,7 +126,7 @@ void chessBoardManager::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 	}
 }
 
-void chessBoardManager::updateGameState() {
+void Boardman::updateGameState() {
 
 	printBoard(_board);
 	std::cout << "Updating game state..." << std::endl;
@@ -160,7 +160,7 @@ void chessBoardManager::updateGameState() {
 	
 }
 
-void chessBoardManager::setPieceTo(std::shared_ptr<Piece> piece, Coordinates finalCoords, bool simulate) {
+void Boardman::setPieceTo(std::shared_ptr<Piece> piece, Coordinates finalCoords, bool simulate) {
 	auto startCoordinates = piece->getCoordinates();
 	int startRow = startCoordinates.getBoardRowIndex();
 	int startColumn = startCoordinates.getBoardColumnIndex();
@@ -199,7 +199,7 @@ void chessBoardManager::setPieceTo(std::shared_ptr<Piece> piece, Coordinates fin
 
 /* This function always runs the board empty of threat
 	and then recalculates every piece's threat */
-void chessBoardManager::recalculatePieceThreats(void) {
+void Boardman::recalculatePieceThreats(void) {
 	PieceType type;
 	Colors color;
 
@@ -518,7 +518,7 @@ void chessBoardManager::recalculatePieceThreats(void) {
 }
 
 // Returns true/false depending on whether the move was successful or not.
-bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target, bool simulate) {
+bool Boardman::tryMove(std::shared_ptr<Piece> piece, Coordinates target, bool simulate) {
 	//piece->calculateAvailableMoves(_board);
 	auto availableMoves = piece->getAvailableMoves();
 	auto pieceType = piece->getType();
@@ -610,7 +610,7 @@ bool chessBoardManager::tryMove(std::shared_ptr<Piece> piece, Coordinates target
 	return false;
 }
 
-bool chessBoardManager::validateAndMove(Player* player, Coordinates startCoord, Coordinates targetCoord) {
+bool Boardman::validateAndMove(Player* player, Coordinates startCoord, Coordinates targetCoord) {
 
 	std::cout << "Turn: [" << turnNumber << "]" << std::endl;
 
@@ -656,7 +656,7 @@ bool chessBoardManager::validateAndMove(Player* player, Coordinates startCoord, 
 	return false;
 }
 
-bool chessBoardManager::simulateMove(Player* player, Coordinates startCoord, Coordinates targetCoord) {
+bool Boardman::simulateMove(Player* player, Coordinates startCoord, Coordinates targetCoord) {
 	int startrow = startCoord.getBoardRowIndex();
 	int startColumn = startCoord.getBoardColumnIndex();
 	std::shared_ptr<Piece> tempPiece = getPiece(startrow, startColumn);
@@ -673,16 +673,16 @@ bool chessBoardManager::simulateMove(Player* player, Coordinates startCoord, Coo
 }
 
 
-void chessBoardManager::addPlayer(Player* p) {
+void Boardman::addPlayer(Player* p) {
 	_players.push_back(p);
 }
 
-std::vector<Player*> chessBoardManager::getPlayers() {
+std::vector<Player*> Boardman::getPlayers() {
 	return _players;
 }
 
 // Function for printing the game board every turn
-void chessBoardManager::printBoard(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
+void Boardman::printBoard(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
 
 	// TODO: ADD THREATS ON BOARD	
 	std::stringstream stream;
@@ -728,7 +728,7 @@ void chessBoardManager::printBoard(std::vector<std::vector<std::shared_ptr<Piece
 	std::cout << stream.str();
 }
 
-bool chessBoardManager::checkForMate(Player* realPlayer) {
+bool Boardman::checkForMate(Player* realPlayer) {
 	// Create a temporary chessboard for simulating all possible moves for next turn
 	std::cout << "Entering mate simulation.." << std::endl;
 
@@ -753,7 +753,7 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 	simCurrentPlayer->setOpponent(simOpponent);
 	simOpponent->setOpponent(simCurrentPlayer);
 
-	chessBoardManager* simBoardMgr = new chessBoardManager();
+	Boardman* simBoardMgr = new Boardman();
 	simBoardMgr->addPlayer(simCurrentPlayer);
 	simBoardMgr->addPlayer(simOpponent);
 
@@ -796,11 +796,11 @@ bool chessBoardManager::checkForMate(Player* realPlayer) {
 	return simulationResult;
 }
 
-std::vector<std::vector<std::shared_ptr<Piece>>> chessBoardManager::getBoard(void) {
+std::vector<std::vector<std::shared_ptr<Piece>>> Boardman::getBoard(void) {
 	return _board;
 }
 
-std::string chessBoardManager::numToPiece(PieceType type) {
+std::string Boardman::numToPiece(PieceType type) {
 	std::string piece;
 	if (type == PieceType::EMPTY) {
 		piece = "-";
@@ -826,7 +826,7 @@ std::string chessBoardManager::numToPiece(PieceType type) {
 	return piece;
 }
 
-void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
+void Boardman::updatePlayerCheckedStatus(Player* player) {
 #if _DEBUG
 	std::cout << "Checking if player " << player->toCharString() << " is checked.." << std::endl;
 #endif
@@ -856,7 +856,7 @@ void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 #define MIN_BOARD_LENGTH 0
 #include "libs.h"
 
-Coordinates chessBoardManager::handleSelection() 
+Coordinates Boardman::handleSelection() 
 {
 	int c = 0;
     while(1)
@@ -907,7 +907,7 @@ Coordinates chessBoardManager::handleSelection()
 
 
 
-// void chessBoardManager::calculateAllPossibleMoves(Player* p) {
+// void boardman::calculateAllPossibleMoves(Player* p) {
 // 	auto color = p->getColor();
 // 	std::vector<Coordinates> moves;
 // 	std::vector<Coordinates> availableMoves;

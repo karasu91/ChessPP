@@ -2,11 +2,11 @@
 #include <locale>
 #include <memory>
 #include "player.h"
-#include "Piece.h"
+#include "piece.h"
 
 
 
-extern bool boeq(int, int, int); // in chessboardManager.cpp
+extern bool boeq(int, int, int); // in boardman.cpp
 
 void Player::removePiece(std::shared_ptr<Piece> removeThis) {
 	for (int i = 0; i < pieces.size(); i++)

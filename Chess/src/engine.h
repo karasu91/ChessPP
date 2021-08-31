@@ -3,7 +3,7 @@
 #include <string>
 #include "player.h"
 #include "coordinates.h"
-#include "chessBoardManager.h"
+#include "boardman.h"
 
 class Player;
 class Piece;
@@ -21,7 +21,7 @@ public:
 		return ret;
 	}	
 
-	chessBoardManager* mgr = NULL;
+	Boardman* mgr = NULL;
 
 	std::vector<std::vector<std::shared_ptr<Piece>>> board;
 	int autoPlayDelayMs = 1000;
@@ -40,8 +40,8 @@ public:
 
 	void run(void);
 
-	int localPort;
-	int targetPort;
+	uint localPort;
+	uint targetPort;
 
 private:
 	Server* _srv;

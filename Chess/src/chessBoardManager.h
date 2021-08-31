@@ -1,6 +1,7 @@
 #pragma once
 #include "coordinates.h"
 #include "Piece.h"
+#include "net.h"
 
 class Player;
 
@@ -18,6 +19,7 @@ public:
 	void recalculatePieceThreats(void);
 	bool tryMove(std::shared_ptr<Piece> piece, Coordinates target, bool simulate);
 	bool validateAndMove(Player*, Coordinates, Coordinates);
+	Coordinates handleSelection(void);
 	bool simulateMove(Player* player, Coordinates startCoord, Coordinates targetCoord);
 	std::shared_ptr<Piece> getPiece(int, int);
 	void upgradePawnCheck(std::shared_ptr<Piece> pawn);
@@ -28,9 +30,16 @@ public:
 	void cleanPieceData();
 	bool gameOver = false;
 	unsigned turnNumber = 0;
+	void enableTestMode(void) { _testState = true; printBoard(_board); }
+	void disableTestMode(void) { _testState = false; printBoard(_board); }
 private:
+	
 	// _resetCoordinates = {0, 0};
 	//HANDLE _hConsoleHandle = NULL;
+	bool _testState = false;
+	int _drawIntervalMs = 500;
+	int _boardSelectionRow = 4;
+	int _boardSelectionCol = 4;
 	std::vector<std::vector<std::shared_ptr<Piece>>> _board;
 	std::vector<Player*> _players;
 };

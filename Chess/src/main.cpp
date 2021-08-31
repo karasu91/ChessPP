@@ -8,24 +8,32 @@
 #include <chrono>
 #include <thread>
 #include "chessBoardManager.h"
-#include "scriptEngine.h"
+#include "engine.h"
 #include "Piece.h"
 
 #define DEMO_MODE 1;
 
-void initGame(void);
+void initGame(std::string, std::string);
 
-int main() {
-	initGame();
+int main(int argc,char* argv[]) {
+	if (argc < 2)
+		std::cout << "less than 2 arguments given." << std::endl;
+	std::string localPort = argv[1];
+	std::string targetPort = argv[2];
+	initGame(localPort, targetPort);
 	return 0;
 }
 
-void initGame(void) {
-	std::string start;
-	std::string end;
+void initGame(std::string lport, std::string tport) {
+
+	auto myPlayer = Colors::WHITE;
+
+	Coordinates start;
+	Coordinates end;
 
 	chessBoardManager * pBoardManager = new chessBoardManager();;
-	ScriptEngine game;
+	
+	Engine game;
 
 	Player* whiteP = new Player(Colors::WHITE);
 	Player* blackP = new Player(Colors::BLACK);
@@ -45,28 +53,34 @@ void initGame(void) {
 	game.mgr = pBoardManager;
 	game.board = pBoardManager->getBoard();
 
-	// Starting player is white
-	game.currentPlayer = whiteP;
-	//std::cin.ignore();
+	game.localPort = atoi(lport.c_str());
+	game.targetPort = atoi(tport.c_str());
+
 	game.mgr->updateGameState();
-	game.game_script_twopins_test();
 
-	bool* gameOverPtr = &game.mgr->gameOver;
+	std::string color;
+	std::cout << "Select player color (w/b): " << std::endl;
+	std::cin >> color;
 
-	// Start game
-	while (!(*gameOverPtr)) {
-		std::cout << game.currentPlayer->toCharString() << ": Select piece: "; std::cin >> start;
-		std::cout << game.currentPlayer->toCharString() << ": Select target: "; std::cin >> end;
-		game.playMove(start, end);
-		
-	}
-	Player* winner = game.currentPlayer->isWinner ? game.currentPlayer : game.currentPlayer->getOpponent();
+	color == "w" ? game.initializeMultiplayer(whiteP) 
+				: game.initializeMultiplayer(blackP);
 
-	std::cout << "Game over! Winner: " << winner->toCharString() << "!                             " << std::endl << std::endl;
+
+	/////////////// region for tests
+	// game.mgr->enableTestMode();
+	// game.game_script_twopins_test();
+	// game.mgr->disableTestMode();
+	////////////// end region for tests
+
+	game.run();
+
+	//Player* winner = game._currentPlayer->isWinner ? game._currentPlayer : game._currentPlayer->getOpponent();
+
+	//std::cout << "Game over! Winner: " << winner->toCharString() << "!                             " << std::endl << std::endl;
 	std::cin.ignore();
 	std::cin.ignore();
 }
 
-ScriptEngine::ScriptEngine() {}
+Engine::Engine() {}
 
-ScriptEngine::~ScriptEngine() {}
+Engine::~Engine() {}

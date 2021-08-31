@@ -693,22 +693,33 @@ void chessBoardManager::printBoard(std::vector<std::vector<std::shared_ptr<Piece
 
 	int primaryColor = tileColors::RED;
 	int secondaryColor = tileColors::BLACK;
+	int selectionColor = tileColors::YELLOW;
 
 	stream << "\033[3" << primaryColor << "m \n\t\t ABCDEFGH" << "\033[0m" << std::endl;
 
 	for (int i = 0; i <= 7; i++) {
+		// Print row numbers to left
 		stream << "\t\t" << "\033[3" << primaryColor << "m" << 8 - i << "\033[0m";
 		for (int j = 0; j <= 7; j++) {
 			std::shared_ptr<Piece> piece = board[i][j];			
 
-			if ((i + j) % 2 == 0)
-				stream << "\033[4" << primaryColor << "m" << piece->getPieceIcon() << "\033[0m";
-			else
-				stream << "\033[4" << secondaryColor << "m" << piece->getPieceIcon() << "\033[0m";	
+			// Highlight current selection
+			if (!_testState && i == _boardSelectionRow && j == _boardSelectionCol) {
+				stream << "\033[4" << selectionColor << "m" << piece->getPieceIcon() << "\033[0m";
+			}
+			 // Print tiled background colors
+			else {
+				if ((i + j) % 2 == 0)
+					stream << "\033[4" << primaryColor << "m" << piece->getPieceIcon() << "\033[0m";
+				else
+					stream << "\033[4" << secondaryColor << "m" << piece->getPieceIcon() << "\033[0m";	
+			}
+			// Print row numbers to right
 			if (j == 7)
 				stream << "\033[3" << primaryColor << "m" << 8 - i << "\033[0m" << std::endl;
 		}
 	}
+	
 	stream << "\033[3" << primaryColor << "m" <<  "\t\t ABCDEFGH" << "\033[0m" << std::endl;
 	stream << std::endl;
 	stream << std::endl;
@@ -834,6 +845,67 @@ void chessBoardManager::updatePlayerCheckedStatus(Player* player) {
 
 	player->setChecked(kingThreatsCount > 0);
 }
+
+#define KEY_UP 66
+#define KEY_DOWN 65
+#define KEY_LEFT 68
+#define KEY_RIGHT 67
+#define KEY_SPACE 32
+#define KEY_ENTER 10
+#define MAX_BOARD_LENGTH 7
+#define MIN_BOARD_LENGTH 0
+#include "libs.h"
+
+Coordinates chessBoardManager::handleSelection() 
+{
+	int c = 0;
+    while(1)
+    {
+        c = 0;
+		c=getch();
+		//std::cout << c << std::endl;
+
+		
+		
+        switch(c) {
+        case KEY_UP: 
+            _boardSelectionRow++;
+			if (_boardSelectionRow > MAX_BOARD_LENGTH)
+				_boardSelectionRow = MAX_BOARD_LENGTH;
+			std::cout << "Selection: " << Coordinates(_boardSelectionCol, _boardSelectionRow).toCharString();
+            break;
+        case KEY_DOWN:
+            _boardSelectionRow--;
+			if (_boardSelectionRow < MIN_BOARD_LENGTH)
+				_boardSelectionRow = MIN_BOARD_LENGTH;
+			std::cout << "Selection: " << Coordinates(_boardSelectionCol, _boardSelectionRow).toCharString();
+            break;
+        case KEY_LEFT:
+            _boardSelectionCol--;
+			if (_boardSelectionCol < MIN_BOARD_LENGTH)
+				_boardSelectionCol = MIN_BOARD_LENGTH;
+			std::cout << "Selection: " << Coordinates(_boardSelectionCol, _boardSelectionRow).toCharString();
+            break;
+        case KEY_RIGHT:
+            _boardSelectionCol++;
+			if (_boardSelectionCol > MAX_BOARD_LENGTH)
+				_boardSelectionCol = MAX_BOARD_LENGTH;
+			std::cout << "Selection: " << Coordinates(_boardSelectionCol, _boardSelectionRow).toCharString();
+            break;
+		case KEY_SPACE:
+			return Coordinates(_boardSelectionCol, _boardSelectionRow);
+			break;
+		case KEY_ENTER:
+			return Coordinates(_boardSelectionCol, _boardSelectionRow);
+			break;
+        default:
+            break;
+        }
+		printBoard(_board);
+    }
+}
+
+
 
 // void chessBoardManager::calculateAllPossibleMoves(Player* p) {
 // 	auto color = p->getColor();

@@ -1,7 +1,4 @@
-﻿// Shakki2.cpp : Defines the entry point for the console application.
-//
-//#include "stdafx.h"
-#include <iostream>
+﻿#include <iostream>
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -11,7 +8,7 @@
 #include "engine.h"
 #include "piece.h"
 
-#define DEMO_MODE 1;
+#define DEMO_MODE 1; /// ??
 
 void initGame(std::string, std::string);
 

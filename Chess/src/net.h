@@ -10,7 +10,7 @@
 #include <unistd.h>	//write
 #include <iostream>
 
-#define MAX 256
+#define TXRX_LEN 256
 
 class Server
 {
@@ -22,7 +22,7 @@ public:
     uint16_t localPort;    
 private:
     int _sock, _conn, _len;
-    sockaddr_in _serverAddress, _client;
+    struct sockaddr_in _serverAddress, _client;
 };
 
 class Client 
@@ -35,6 +35,6 @@ public:
     uint16_t targetPort;
 private:
     int _sock;
-	sockaddr_in server;
-	char message[MAX], response[MAX];
+	sockaddr_in _server;
+	char message[TXRX_LEN], response[TXRX_LEN];
 };

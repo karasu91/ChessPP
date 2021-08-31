@@ -4,6 +4,9 @@
 #include <termios.h>
 #include <unistd.h>
 
+// Linux implementation of getch() in POSIX-style.
+// Reads keyboard inputs.
+
 //https://stackoverflow.com/a/42220830
 char getch() {
     char buf = 0;

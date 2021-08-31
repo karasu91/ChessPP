@@ -15,7 +15,7 @@ bool Server::initialize()
 {  
     std::cout << "SERVER: Initializing..." << std::endl;
 
-    // socket create and verification
+    // Create socket
     if ((_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         std::cout << "SERVER: socket creation failed." << std::endl;
         return false;
@@ -24,7 +24,7 @@ bool Server::initialize()
     std::cout << "SERVER: Socket successfully created." << std::endl;
     bzero(&_serverAddress, sizeof(_serverAddress));
   
-    // assign IP, PORT
+    // /* Assign listening method, port, etc.
     _serverAddress.sin_family = AF_INET;
     _serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     _serverAddress.sin_port = htons(localPort);
@@ -37,63 +37,46 @@ bool Server::initialize()
 
     std::cout <<  "SERVER: Socket successfully bound." << std::endl;
   
-    // Now server is ready to listen and verification
+    // Set the server to accept maximum N connections simultaneously. 
+    // (listen(_sock, N))
     if ((listen(_sock, 3)) < 0) {
         std::cout << "SERVER: Listen failed...\n" << std::endl;
         return false;
     }
+    std::cout << "SERVER: Started accepting connections..." << std::endl;
 
-    std::cout << "SERVER: Server successfully listening..." << std::endl;
-    _len = sizeof(struct sockaddr_in);
-    
-    std::cout << "SERVER: Waiting for connection request.." << std::endl;
-    // Accept the data packet from client and verification
+    _len = sizeof(struct sockaddr_in);    
+    std::cout << "SERVER: Waiting for connections..." << std::endl;
+
+    // Establish/accept the connection and make it persistent over the session.
     if ((_conn = accept(_sock, (struct sockaddr*)&_client, (socklen_t*)&_len)) < 0) {
         std::cout << "SERVER: Server acccept failed." << std::endl;
         return false;
     }
-
-    std::cout << "SERVER: Server acccepted the client." << std::endl;
+    std::cout << "SERVER: Server acccepted a client." << std::endl;
 
     return true;
 }  
 
 std::string Server::receiveData(void) 
 {    
-    std::cout << "SERVER: Entered receiveData()..." << std::endl;
-    char recvBuf[MAX];
-    int n;
+    char recvBuf[TXRX_LEN];    
+    bzero(recvBuf, TXRX_LEN);
 
-    bzero(recvBuf, MAX);
-
-    std::cout << "SERVER: read()..." << std::endl;
-    // read the message from client and copy it in buffer
-    if(read(_conn, recvBuf, MAX) < 0)
+    // Wait for a new message from the established client connection.
+    // read() blocks the execution until data is received.
+    if(read(_conn, recvBuf, TXRX_LEN) < 0)
     {
         std::cout << "SERVER: Receive data timed out." << std::endl;
         return "err";
     }
-    
-    if (n < 0) {
-        printf("ERROR reading from socket");
-        return "err";
-    }
-    
-    // print buffer which contains the client contents
-    printf("SERVER: From client: %s\n", recvBuf);
-    
-    //bzero(recvBuf, MAX);
-    //n = 0;
 
-    char sendBuf[MAX] = "OK";
+    printf("SERVER: From client: %s\n", recvBuf);    
 
-    // and send that buffer to client
+    // Prepare for 'handshake' message (verify that both ends received the message properly)
+    char sendBuf[TXRX_LEN] = "OK";
     write(_conn, sendBuf, sizeof(sendBuf));
 
-    // if msg contains "Exit" then server exit and chat ended.
-    if (strncmp("exit", sendBuf, 4) == 0) {
-        printf("SERVER: Server Exit...\n");
-    }
     return recvBuf;
 }
 
@@ -101,7 +84,7 @@ std::string Server::receiveData(void)
 bool Client::connectServer(std::string ipAddr) {
 	
     std::cout << "CLIENT: Trying to connect to server... " << ipAddr << ":" << targetPort << std::endl;
-	//Create socket
+	// Create the initial socket
 	if ((_sock = socket(AF_INET , SOCK_STREAM , 0)) == -1)
 	{
 		std::cout << "CLIENT: Failed to create socket." << std::endl;
@@ -110,12 +93,12 @@ bool Client::connectServer(std::string ipAddr) {
 
 	std::cout << "CLIENT: Socket created successfully" << std::endl;
 	
-	server.sin_addr.s_addr = inet_addr(ipAddr.c_str());
-	server.sin_family = AF_INET;
-	server.sin_port = htons( targetPort );
+	_server.sin_addr.s_addr = inet_addr(ipAddr.c_str());
+	_server.sin_family = AF_INET;
+	_server.sin_port = htons( targetPort );
 
-	//Connect to remote server
-	if (connect(_sock , (struct sockaddr *)&server , sizeof(server)) < 0)
+	//Connect to remote server (server does ACCEPT for the connection if possible)
+	if (connect(_sock , (struct sockaddr *)&_server , sizeof(_server)) < 0)
 	{
 		perror("CLIENT: Failed to establish connection.");
 		return false;
@@ -127,9 +110,8 @@ bool Client::connectServer(std::string ipAddr) {
 
 bool Client::sendData(std::string data) 
 {    
-    std::cout << "CLIENT: sendData() send" << std::endl;
-
-    // Send some data
+    // std::string not supported in send() -function ->
+    // the string must be copied into temporary buffer.
     strcpy(message, data.c_str());
 
     if(send(_sock, data.c_str(), strlen(message), 0) < 0)
@@ -139,8 +121,9 @@ bool Client::sendData(std::string data)
     }
     
     std::cout << "CLIENT: sendData() recv" << std::endl;
-    // Receive a reply from the server
-    if(recv(_sock, response, MAX, 0) < 0)
+    
+    // Wait for the handshake message.
+    if(recv(_sock, response, TXRX_LEN, 0) < 0)
     {
         std::cout << "CLIENT: Receive data timed out." << std::endl;
         return false;

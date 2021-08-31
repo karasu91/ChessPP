@@ -89,7 +89,6 @@ bool Engine::game_script_twopins_test(void) {
 
 bool Engine::playMove(std::string start, std::string end) 
 {		
-	std::cout << "playing move " << start << "->" << end << std::endl;
 	while (true)
 	{
 		start = convertToUpper(start);
@@ -110,7 +109,6 @@ bool Engine::playMove(std::string start, std::string end)
 
 bool Engine::playMove(Coordinates start, Coordinates end) 
 {		
-	std::cout << "playing move " << start.toCharString() << "->" << end.toCharString() << std::endl;
 	while (true)
 	{
 		if (mgr->validateAndMove(_currentPlayer, start, end) == true)
@@ -153,8 +151,10 @@ void Engine::initializeMultiplayer(Player* player) {
 			std::cout << "Failed to initialize tcp/ip client"  << std::endl;
 			return;
 		}
-	}		
-	else		
+	}	
+
+	 // This else clause is for localhost simulation since the server/client do not work truly in parallel		
+	else
 	{
 		_currentPlayer = player->getOpponent();	
 		_cli = new Client();
@@ -181,7 +181,8 @@ void Engine::swapTurn() {
 }
 
 
-// https://stackoverflow.com/a/46931770
+// Split a basic string with a defined delimiter.
+// String manipulation poop stolen from: https://stackoverflow.com/a/46931770
 std::vector<std::string> split (std::string s, std::string delimiter) {
     size_t pos_start = 0, pos_end, delim_len = delimiter.length();
     std::string token;
@@ -198,19 +199,16 @@ std::vector<std::string> split (std::string s, std::string delimiter) {
 }
 
 
-
 void Engine::run() {
-	//std::cout << "debug1" << std::endl;
 	while (!(mgr->gameOver)) 
 	{
-		//std::cout << "debug2" << std::endl;
 		if (_currentPlayer == _localPlayer) {
 			std::cout << _currentPlayer->toCharString() << ": Select piece (press space/enter to accept)";
 			Coordinates start = mgr->handleSelection();
 			std::cout << _currentPlayer->toCharString() << ": Select target (press space/enter to accept)"; 
 			Coordinates end = mgr->handleSelection();
 
-			// send data to another player
+			// Send data to another player with somewhat of a failsafe mechanics
 			int n = 0;
 			while (true) 
 			{			
@@ -245,9 +243,7 @@ void Engine::run() {
 
 			playMove(Coordinates(moves[0]), Coordinates(moves[1]));
 
-			//std::cout << "Debug555" << std::endl;
 		}
 	}
-	//std::cout << "Debug666" << std::endl;
 }
 

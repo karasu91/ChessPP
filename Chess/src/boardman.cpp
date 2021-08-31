@@ -15,8 +15,8 @@ bool boeq(int compare, int lhs, int rhs) {
 	return compare >= lhs && compare <= rhs;
 }
 
-Boardman::Boardman() {
-
+Boardman::Boardman() 
+{
 #if WINDOWS
 	if (_hConsoleHandle == NULL)
 		_hConsoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -38,10 +38,6 @@ Boardman::~Boardman() {
 		delete _players[i];
 	_players.clear();
 }
-
-
-
-
 
 
 // Initialize the board with players' pieces

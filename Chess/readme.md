@@ -1,7 +1,7 @@
 TODO:
-- [ ] En passant
+- [x] En passant
 - [ ] Code cleanup
-- [ ] Piece value (scores assigned to each piece?)
+- [x] Piece value (scores assigned to each piece?)
 - [ ] Simple ai
 - [ ] Recursive depth search
-- [ ] Netcode
+- [x] Netcode

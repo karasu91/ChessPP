@@ -2,8 +2,6 @@
 #include "piece.h"
 #include <memory>
 
-
-
 Piece::Piece(Colors color, PieceType type, Coordinates coordinates) {
 
 	if (type != PieceType::EMPTY)
@@ -303,9 +301,6 @@ void Piece::checkPins()
 
 
 void Pawn::calculateAvailableMoves(std::vector<std::vector<std::shared_ptr<Piece>>> board) {
-
-	if (hasCalculated)
-		return;
 
 	int sd = _color == Colors::WHITE ? -1 : 1; // scandirection (white moves top, black moves down)
 	int row = _coords.getBoardRowIndex();

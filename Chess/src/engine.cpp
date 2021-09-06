@@ -146,7 +146,7 @@ void Engine::initializeMultiplayer(Player* player) {
 
 		_cli = new Client();
 		_cli->targetPort = targetPort;
-		if (_cli->connectServer("127.0.0.1") == false)
+		if (_cli->connectServer(targetIp) == false)
 		{
 			std::cout << "Failed to initialize tcp/ip client"  << std::endl;
 			return;
@@ -159,7 +159,7 @@ void Engine::initializeMultiplayer(Player* player) {
 		_currentPlayer = player->getOpponent();	
 		_cli = new Client();
 		_cli->targetPort = targetPort;
-		if (_cli->connectServer("127.0.0.1") == false)
+		if (_cli->connectServer(targetIp) == false)
 		{			
 			std::cout << "Failed to initialize tcp/ip client" << std::endl;
 			return;

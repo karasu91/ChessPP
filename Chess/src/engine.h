@@ -42,7 +42,8 @@ public:
 
 	uint localPort;
 	uint targetPort;
-
+	std::string targetIp;
+	
 private:
 	Server* _srv;
 	Client* _cli;

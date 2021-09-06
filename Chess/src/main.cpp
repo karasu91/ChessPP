@@ -13,15 +13,16 @@
 void initGame(std::string, std::string);
 
 int main(int argc,char* argv[]) {
-	if (argc < 2)
-		std::cout << "less than 2 arguments given." << std::endl;
+	if (argc < 3)
+		std::cout << "less than 3 arguments given." << std::endl;
 	std::string localPort = argv[1];
 	std::string targetPort = argv[2];
-	initGame(localPort, targetPort);
+	std::string targetIp = argv[3];
+	initGame(localPort, targetPort, targetIp);
 	return 0;
 }
 
-void initGame(std::string lport, std::string tport) {
+void initGame(std::string lport, std::string tport, std::string tIp) {
 
 	auto myPlayer = Colors::WHITE;
 
@@ -52,6 +53,7 @@ void initGame(std::string lport, std::string tport) {
 
 	game.localPort = atoi(lport.c_str());
 	game.targetPort = atoi(tport.c_str());
+	game.targetIp = tIp;
 
 	game.mgr->updateGameState();
 

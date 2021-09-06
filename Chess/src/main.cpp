@@ -10,7 +10,7 @@
 
 #define DEMO_MODE 1; /// ??
 
-void initGame(std::string, std::string);
+void initGame(std::string, std::string, std::string);
 
 int main(int argc,char* argv[]) {
 	if (argc < 3)

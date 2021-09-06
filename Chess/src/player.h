@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-
+#include <memory>
 
 class Piece;
 enum class Colors;

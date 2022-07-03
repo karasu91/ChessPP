@@ -22,7 +22,7 @@ $(shell mkdir -p $(DIRS))
 TARGET = main
 
 main: $(OBJFILES)
-	$(CXX) $(CXXFLAGS) -o $(BUILDDIR)/$@ $^
+	$(CXX) $(CXXFLAGS) $^ -o $(BUILDDIR)/$@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<

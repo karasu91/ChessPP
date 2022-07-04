@@ -1,3 +1,6 @@
 [submodule "Chess/src/lib/wt"]
 	path = Chess/src/lib/wt
 	url = https://github.com/emweb/wt.git
+[submodule "chess/src/lib/wt"]
+	path = chess/src/lib/wt
+	url = https://github.com/emweb/wt.git

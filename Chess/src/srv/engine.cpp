@@ -87,41 +87,41 @@ bool Engine::game_script_twopins_test(void) {
 	}
 }
 
-bool Engine::playMove(std::string start, std::string end) 
-{		
+bool Engine::playMove(std::string start, std::string end)
+{
 	while (true)
 	{
 		start = convertToUpper(start);
 		end = convertToUpper(end);
 		if (mgr->validateAndMove(_currentPlayer, start, end) == true)
-		{				
+		{
 
 			mgr->updateGameState();
 			swapTurn();
-			//mgr->updateGameState();				
+			//mgr->updateGameState();
 			//std::this_thread::sleep_for(std::chrono::milliseconds(autoPlayDelayMs));
 			return true;
 		}
 		else // Failed to move.
 			return false;
-	}		
+	}
 }
 
-bool Engine::playMove(Coordinates start, Coordinates end) 
-{		
+bool Engine::playMove(Coordinates start, Coordinates end)
+{
 	while (true)
 	{
 		if (mgr->validateAndMove(_currentPlayer, start, end) == true)
 		{
 			mgr->updateGameState();
 			swapTurn();
-			//mgr->updateGameState();				
+			//mgr->updateGameState();
 			//std::this_thread::sleep_for(std::chrono::milliseconds(autoPlayDelayMs));
 			return true;
 		}
 		else // Failed to move.
 			return false;
-	}		
+	}
 }
 
 void Engine::setCurrentPlayer(Player* player)
@@ -129,50 +129,53 @@ void Engine::setCurrentPlayer(Player* player)
 	_currentPlayer = player;
 }
 
-void Engine::initializeMultiplayer(Player* player) {	
+void Engine::initializeMultiplayer(Player* player) {
 
 	_localPlayer = player;
 
-	if (_localPlayer->getColor() == Colors::WHITE)		
-	{
-		_currentPlayer = _localPlayer;
-			// Initialize TCP/IP network stack
-		_srv = new Server();
-		_srv->localPort = localPort;
-		if (_srv->initialize() == false) {
-			std::cout << "Failed to initialize tcp/ip server" << std::endl;
-			return;
-		}
+//	if (_localPlayer->getColor() == Colors::WHITE)
+//	{
+//		_currentPlayer = _localPlayer;
+//			// Initialize TCP/IP network stack
+//		_srv = new Server();
+//		_srv->localPort = localPort;
+//		if (_srv->initialize() == false) {
+//			std::cout << "Failed to initialize tcp/ip server" << std::endl;
+//			return;
+//		}
+//
+//		_cli = new Client();
+//		_cli->targetPort = targetPort;
+//		if (_cli->connectServer(targetIp) == false)
+//		{
+//			std::cout << "Failed to initialize tcp/ip client"  << std::endl;
+//			return;
+//		}
+//	}
 
-		_cli = new Client();
-		_cli->targetPort = targetPort;
-		if (_cli->connectServer(targetIp) == false)
-		{
-			std::cout << "Failed to initialize tcp/ip client"  << std::endl;
-			return;
-		}
-	}	
-
-	 // This else clause is for localhost simulation since the server/client do not work truly in parallel		
-	else
-	{
-		_currentPlayer = player->getOpponent();	
-		_cli = new Client();
-		_cli->targetPort = targetPort;
-		if (_cli->connectServer(targetIp) == false)
-		{			
-			std::cout << "Failed to initialize tcp/ip client" << std::endl;
-			return;
-		}
+	 // This else clause is for localhost simulation since the server/client do not work truly in parallel
+//	else
+	
+	//{
+	//	std::cout << "Initializing client..." << std::endl;
+	//	_currentPlayer = player->getOpponent();
+	//	_cli = new Client();
+	//	_cli->targetPort = targetPort;
+	//	if (_cli->connectServer(targetIp) == false)
+	//	{
+	//		std::cout << "Failed to initialize tcp/ip client" << std::endl;
+	//		return;
+	//	}
 
 		// Initialize TCP/IP network stack
+		std::cout << "initializing TCP/IP..." << std::endl;
 		_srv = new Server();
 		_srv->localPort = localPort;
 		if (_srv->initialize() == false) {
 			std::cout << "Failed to initialize tcp/ip server"  << std::endl;
 			return;
 		}
-	}
+	
 
 }
 
@@ -200,50 +203,60 @@ std::vector<std::string> split (std::string s, std::string delimiter) {
 
 
 void Engine::run() {
-	while (!(mgr->gameOver)) 
+	while (!(mgr->gameOver))
 	{
-		if (_currentPlayer == _localPlayer) {
-			std::cout << _currentPlayer->toCharString() << ": Select piece (press space/enter to accept)";
-			Coordinates start = mgr->handleSelection();
-			std::cout << _currentPlayer->toCharString() << ": Select target (press space/enter to accept)"; 
-			Coordinates end = mgr->handleSelection();
-
-			// Send data to another player with somewhat of a failsafe mechanics
-			int n = 0;
-			while (true) 
-			{			
-				if (_cli->sendData(start.toCharString()+"->"+end.toCharString()) == false) {
-					std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-					n++;				
-					if (n == 4)
-						break;
-				}
-				else
-					break;
-			}
-
-			playMove(start, end);
-		}
-		else
+//		if (_currentPlayer == _localPlayer) {
+//			std::cout << _currentPlayer->toCharString() << ": Select piece (press space/enter to accept)";
+//			Coordinates start = mgr->handleSelection();
+//			std::cout << _currentPlayer->toCharString() << ": Select target (press space/enter to accept)";
+//			Coordinates end = mgr->handleSelection();
+//
+//			// Send data to another player with somewhat of a failsafe mechanics
+//			int n = 0;
+//			while (true)
+//			{
+//				if (_cli->sendData(start.toCharString()+"->"+end.toCharString()) == false) {
+//					std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//					n++;
+//					if (n == 4)
+//						break;
+//				}
+//				else
+//					break;
+//			}
+//
+//			playMove(start, end);
+//		}
+//		else
 		{
-			std::cout << "Waiting for opponent to finish move..." << std::endl;
+			std::cout << "Waiting for player to move..." << std::endl;
 			std::this_thread::sleep_for(std::chrono::milliseconds(autoPlayDelayMs));
 
-			// Wait for data from enemy
+			// Wait for data from player
 			std::string rcvData(_srv->receiveData());
 			if (rcvData == "err")
 			{
 				std::cout << "error reading rcvData input. exiting." << std::endl;
-				return;
+				break;
 			}
 
 			std::string delim = "->";
 			std::vector<std::string> moves;
 			moves = split(rcvData, delim);
+			if (moves.size() < 2) {
+				_srv->sendData("Data faulty! Try again.");
+				rcvData = "";
+				continue;
+			}
+
+
 
 			playMove(Coordinates(moves[0]), Coordinates(moves[1]));
-
 		}
 	}
+
+	std::cout << "Cleaning up..." << std::endl;
+	delete _srv;
+	delete _cli;
 }
 

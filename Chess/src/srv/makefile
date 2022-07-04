@@ -13,7 +13,6 @@ BUILDDIR = ./build
 SRCFILES = $(wildcard $(SRCDIR)/*.cpp)
 OBJFILES = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCFILES))
 
-
 DIRS=$(OBJDIR) $(BUILDDIR)
 
 $(shell mkdir -p $(DIRS))

@@ -16,20 +16,21 @@ class Server
 {
 public:
     Server() {};
-    ~Server() {};
+    ~Server();
     bool initialize(void);
     std::string receiveData();
-    uint16_t localPort;    
+    uint16_t localPort;
+	void sendData(std::string);
 private:
     int _sock, _conn, _len;
     struct sockaddr_in _serverAddress, _client;
 };
 
-class Client 
+class Client
 {
 public:
     Client() {};
-    ~Client() {};
+    ~Client();
     bool connectServer(std::string ip);
     bool sendData(std::string data);
     uint16_t targetPort;

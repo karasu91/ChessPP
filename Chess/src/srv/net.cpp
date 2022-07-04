@@ -11,8 +11,13 @@
 #include <arpa/inet.h>	//inet_addr
 
 
+Server::~Server() {
+	std::cout << "SERVER: Closing socket..." << std::endl;
+	close(_sock);
+}
+
 bool Server::initialize()
-{  
+{
     std::cout << "SERVER: Initializing..." << std::endl;
 
     // Create socket
@@ -23,12 +28,12 @@ bool Server::initialize()
 
     std::cout << "SERVER: Socket successfully created." << std::endl;
     bzero(&_serverAddress, sizeof(_serverAddress));
-  
+
     // /* Assign listening method, port, etc.
     _serverAddress.sin_family = AF_INET;
     _serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
     _serverAddress.sin_port = htons(localPort);
-  
+
     // Binding newly created socket to given IP and verification
     if ((bind(_sock, (struct sockaddr*)&_serverAddress, sizeof(_serverAddress))) < 0) {
         std::cout << "SERVER: Socket binding failed." << std::endl;
@@ -36,8 +41,8 @@ bool Server::initialize()
     }
 
     std::cout <<  "SERVER: Socket successfully bound." << std::endl;
-  
-    // Set the server to accept maximum N connections simultaneously. 
+
+    // Set the server to accept maximum N connections simultaneously.
     // (listen(_sock, N))
     if ((listen(_sock, 3)) < 0) {
         std::cout << "SERVER: Listen failed...\n" << std::endl;
@@ -45,7 +50,7 @@ bool Server::initialize()
     }
     std::cout << "SERVER: Started accepting connections..." << std::endl;
 
-    _len = sizeof(struct sockaddr_in);    
+    _len = sizeof(struct sockaddr_in);
     std::cout << "SERVER: Waiting for connections..." << std::endl;
 
     // Establish/accept the connection and make it persistent over the session.
@@ -56,11 +61,11 @@ bool Server::initialize()
     std::cout << "SERVER: Server acccepted a client." << std::endl;
 
     return true;
-}  
+}
 
-std::string Server::receiveData(void) 
-{    
-    char recvBuf[TXRX_LEN];    
+std::string Server::receiveData(void)
+{
+    char recvBuf[TXRX_LEN];
     bzero(recvBuf, TXRX_LEN);
 
     // Wait for a new message from the established client connection.
@@ -71,7 +76,7 @@ std::string Server::receiveData(void)
         return "err";
     }
 
-    printf("SERVER: From client: %s\n", recvBuf);    
+    printf("SERVER: From client: %s\n", recvBuf);
 
     // Prepare for 'handshake' message (verify that both ends received the message properly)
     char sendBuf[TXRX_LEN] = "OK";
@@ -80,9 +85,19 @@ std::string Server::receiveData(void)
     return recvBuf;
 }
 
+void Server::sendData(std::string data) {
+	char sendBuf[TXRX_LEN];  // Make sure there's enough space
+	strcpy(sendBuf, data.c_str());
+	write(_conn, sendBuf, sizeof(sendBuf));
+}
+
+Client::~Client() {
+	std::cout << "CLIENT: Closing socket..." << std::endl;
+	close(_sock);
+}
 
 bool Client::connectServer(std::string ipAddr) {
-	
+
     std::cout << "CLIENT: Trying to connect to server... " << ipAddr << ":" << targetPort << std::endl;
 	// Create the initial socket
 	if ((_sock = socket(AF_INET , SOCK_STREAM , 0)) == -1)
@@ -92,7 +107,7 @@ bool Client::connectServer(std::string ipAddr) {
 	}
 
 	std::cout << "CLIENT: Socket created successfully" << std::endl;
-	
+
 	_server.sin_addr.s_addr = inet_addr(ipAddr.c_str());
 	_server.sin_family = AF_INET;
 	_server.sin_port = htons( targetPort );
@@ -108,8 +123,8 @@ bool Client::connectServer(std::string ipAddr) {
     return true;
 }
 
-bool Client::sendData(std::string data) 
-{    
+bool Client::sendData(std::string data)
+{
     // std::string not supported in send() -function ->
     // the string must be copied into temporary buffer.
     strcpy(message, data.c_str());
@@ -119,16 +134,21 @@ bool Client::sendData(std::string data)
         std::cout << "CLIENT: Failed to send data." << std::endl;
         return false;
     }
-    
+
     std::cout << "CLIENT: sendData() recv" << std::endl;
-    
+
     // Wait for the handshake message.
     if(recv(_sock, response, TXRX_LEN, 0) < 0)
     {
         std::cout << "CLIENT: Receive data timed out." << std::endl;
         return false;
     }
-    
+
     std::cout << "CLIENT: Server reply :" << response << std::endl;
+	if (response != "OK") {
+		return false;
+	}
+
+
     return true;
 }

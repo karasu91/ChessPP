@@ -10,19 +10,16 @@
 
 #define DEMO_MODE 1; /// ??
 
-void initGame(std::string, std::string, std::string);
+void initGame(std::string);
 
 int main(int argc,char* argv[]) {
-	if (argc < 3)
-		std::cout << "less than 3 arguments given." << std::endl;
-	std::string localPort = argv[1];
-	std::string targetPort = argv[2];
-	std::string targetIp = argv[3];
-	initGame(localPort, targetPort, targetIp);
+
+	initGame("59203");
+
 	return 0;
 }
 
-void initGame(std::string lport, std::string tport, std::string tIp) {
+void initGame(std::string lport) {
 
 	auto myPlayer = Colors::WHITE;
 
@@ -30,7 +27,7 @@ void initGame(std::string lport, std::string tport, std::string tIp) {
 	Coordinates end;
 
 	Boardman * pBoardManager = new Boardman();
-	
+
 	Engine game;
 
 	Player* whiteP = new Player(Colors::WHITE);
@@ -43,7 +40,7 @@ void initGame(std::string lport, std::string tport, std::string tIp) {
 	blackP->setOpponent(whiteP);
 
 	pBoardManager->addPlayer(whiteP);
-	pBoardManager->addPlayer(blackP);	
+	pBoardManager->addPlayer(blackP);
 
 	pBoardManager->initBoard(whiteP);
 	pBoardManager->initBoard(blackP);
@@ -52,8 +49,6 @@ void initGame(std::string lport, std::string tport, std::string tIp) {
 	game.board = pBoardManager->getBoard();
 
 	game.localPort = atoi(lport.c_str());
-	game.targetPort = atoi(tport.c_str());
-	game.targetIp = tIp;
 
 	game.mgr->updateGameState();
 
@@ -61,7 +56,7 @@ void initGame(std::string lport, std::string tport, std::string tIp) {
 	std::cout << "Select player color (w/b): " << std::endl;
 	std::cin >> color;
 
-	color == "w" ? game.initializeMultiplayer(whiteP) 
+	color == "w" ? game.initializeMultiplayer(whiteP)
 				: game.initializeMultiplayer(blackP);
 
 

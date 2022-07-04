@@ -5,7 +5,7 @@ CXX = g++
 # Compiler flags
 # -Wall		- turn all compiler warnings on
 
-CXXFLAGS	= -std=c++20 -O2 -Wall -g -I./lib/include/ -L./usr/local/
+CXXFLAGS	= -std=c++14 -O2 -Wall -lwt -lwthttp -g -I./lib/build/usr/local/include/ -L./lib/build/usr/local/lib/
 
 SRCDIR = .
 OBJDIR = ./obj
@@ -15,19 +15,22 @@ OBJFILES = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCFILES))
 
 DIRS=$(OBJDIR) $(BUILDDIR)
 LIBDIR = ./lib
+TMPDIR = ./tmp
 
 $(shell mkdir -p $(DIRS))
-$(shell mkdir -p $(LIBDIR) && cd $(LIBDIR) && cmake ../lib/wt/ && DESTDIR=$(LIBDIR) make install -j20)
 
 # The build target
 TARGET = client
 
-main: $(OBJFILES)
+libs:
+	$(shell mkdir -p $(TMPDIR) && mkdir -p $(LIBDIR) && cd $(TMPDIR) && cmake ../../lib/wt/ && DESTDIR=./build make install -j20) && cp ./build/usr/* ../$(LIBDIR)
+
+$(TARGET): $(OBJFILES)
 	$(CXX) $(CXXFLAGS) $^ -o $(BUILDDIR)/$@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm $(OBJDIR) $(BUILDDIR) -rf
+	rm $(OBJDIR) $(BUILDDIR) $(LIBDIR) -rf
 

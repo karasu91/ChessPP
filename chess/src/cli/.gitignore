@@ -1,1 +1,4 @@
-./client
+client/
+lib/
+tmp/
+build/

@@ -4,8 +4,12 @@ LIBDIR="./lib"
 TMPDIR="./tmp"
 mkdir $LIBDIR
 mkdir $TMPDIR
-cmake ../lib/wt/ && \
-DESTDIR="$TMPDIR/build" make install -j20 &&
+cd $TMPDIR &&
+cmake ../../lib/wt/ && \
+DESTDIR="./build" make install -j20 &&
 echo copying tmp files into $LIBDIR...
-cp $TMPDIR/build/usr/* -R $LIBDIR
+cp ./build/usr/local/* -R ../$LIBDIR
+cd ..
+echo "cleaning up..."
+rm $TMPDIR -rf
 echo "finished."

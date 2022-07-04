@@ -1,12 +1,11 @@
 #include "../srv/net.cpp"
-#include "../lib/wt/src/Wt/WApplication.h"
-#include "../lib/wt/src/Wt/WBreak.h"
-#include "../lib/wt/src/Wt/WContainerWidget.h"
-#include "../lib/wt/src/Wt/WLineEdit.h"
-#include "../lib/wt/src/Wt/WPushButton.h"
-#include "../lib/wt/src/Wt/WText.h"
+#include "./lib/include/Wt/WApplication.h"
+#include "./lib/include/Wt/WBreak.h"
+#include "./lib/include/Wt/WContainerWidget.h"
+#include "./lib/include/Wt/WLineEdit.h"
+#include "./lib/include/Wt/WPushButton.h"
+#include "./lib/include/Wt/WText.h"
 
-#include <Wt/WApplication>
 
 #include <iostream>
 #include <thread>

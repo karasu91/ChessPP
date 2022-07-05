@@ -45,8 +45,8 @@ public:
 	std::string targetIp;
 	
 private:
-	Server* _srv;
-	Client* _cli;
+	NetServer* _srv;
+	NetClient* _cli;
 
 	Player* _currentPlayer = NULL;
 	Player* _localPlayer = NULL;

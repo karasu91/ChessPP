@@ -169,7 +169,7 @@ void Engine::initializeMultiplayer(Player* player) {
 
 		// Initialize TCP/IP network stack
 		std::cout << "initializing TCP/IP..." << std::endl;
-		_srv = new Server();
+		_srv = new NetServer();
 		_srv->localPort = localPort;
 		if (_srv->initialize() == false) {
 			std::cout << "Failed to initialize tcp/ip server"  << std::endl;

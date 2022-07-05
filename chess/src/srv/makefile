@@ -18,9 +18,9 @@ DIRS=$(OBJDIR) $(BUILDDIR)
 $(shell mkdir -p $(DIRS))
 
 # The build target
-TARGET = main
+TARGET = server
 
-main: $(OBJFILES)
+server: $(OBJFILES)
 	$(CXX) $(CXXFLAGS) $^ -o $(BUILDDIR)/$@
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp

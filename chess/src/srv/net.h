@@ -12,11 +12,11 @@
 
 #define TXRX_LEN 256
 
-class Server
+class NetServer
 {
 public:
-    Server() {};
-    ~Server();
+    NetServer() {};
+    ~NetServer();
     bool initialize(void);
     std::string receiveData();
     uint16_t localPort;
@@ -26,11 +26,11 @@ private:
     struct sockaddr_in _serverAddress, _client;
 };
 
-class Client
+class NetClient
 {
 public:
-    Client() {};
-    ~Client();
+    NetClient() {};
+    ~NetClient();
     bool connectServer(std::string ip);
     bool sendData(std::string data);
     uint16_t targetPort;

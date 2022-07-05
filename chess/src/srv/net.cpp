@@ -11,12 +11,12 @@
 #include <arpa/inet.h>	//inet_addr
 
 
-Server::~Server() {
+NetServer::~NetServer() {
 	std::cout << "SERVER: Closing socket..." << std::endl;
 	close(_sock);
 }
 
-bool Server::initialize()
+bool NetServer::initialize()
 {
     std::cout << "SERVER: Initializing..." << std::endl;
 
@@ -63,7 +63,7 @@ bool Server::initialize()
     return true;
 }
 
-std::string Server::receiveData(void)
+std::string NetServer::receiveData(void)
 {
     char recvBuf[TXRX_LEN];
     bzero(recvBuf, TXRX_LEN);
@@ -85,18 +85,18 @@ std::string Server::receiveData(void)
     return recvBuf;
 }
 
-void Server::sendData(std::string data) {
+void NetServer::sendData(std::string data) {
 	char sendBuf[TXRX_LEN];  // Make sure there's enough space
 	strcpy(sendBuf, data.c_str());
 	write(_conn, sendBuf, sizeof(sendBuf));
 }
 
-Client::~Client() {
+NetClient::~NetClient() {
 	std::cout << "CLIENT: Closing socket..." << std::endl;
 	close(_sock);
 }
 
-bool Client::connectServer(std::string ipAddr) {
+bool NetClient::connectServer(std::string ipAddr) {
 
     std::cout << "CLIENT: Trying to connect to server... " << ipAddr << ":" << targetPort << std::endl;
 	// Create the initial socket
@@ -123,7 +123,7 @@ bool Client::connectServer(std::string ipAddr) {
     return true;
 }
 
-bool Client::sendData(std::string data)
+bool NetClient::sendData(std::string data)
 {
     // std::string not supported in send() -function ->
     // the string must be copied into temporary buffer.

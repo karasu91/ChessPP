@@ -1,0 +1,21 @@
+[
+ {
+  "directory": "/home/lihis/Projects/ChessPP/chess/src/cli",
+  "arguments": [
+   "g++",
+   "-std=c++20",
+   "-O2",
+   "-Wall",
+   "-lwt",
+   "-lwthttp",
+   "-g",
+   "-I./lib/include/",
+   "-L./lib/lib/",
+   "-c",
+   "-o",
+   "obj/client.o",
+   "client.cpp"
+  ],
+  "file": "client.cpp"
+ }
+]

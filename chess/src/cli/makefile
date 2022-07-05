@@ -5,7 +5,7 @@ CXX = g++
 # Compiler flags
 # -Wall		- turn all compiler warnings on
 
-CXXFLAGS	= -std=c++14 -O2 -Wall -lwt -lwthttp -g -I./lib/include/ -L./lib/lib/
+CXXFLAGS	= -std=c++20 -O2 -Wall -lwt -lwthttp -g -I./lib/include/ -L./lib/lib/
 
 SRCDIR = .
 OBJDIR = ./obj

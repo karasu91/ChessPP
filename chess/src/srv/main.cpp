@@ -10,16 +10,16 @@
 
 #define DEMO_MODE 1; /// ??
 
-void initGame(std::string);
+void initGame();
 
 int main(int argc,char* argv[]) {
 
-	initGame("59203");
+	initGame();
 
 	return 0;
 }
 
-void initGame(std::string lport) {
+void initGame() {
 
 	auto myPlayer = Colors::WHITE;
 
@@ -48,7 +48,7 @@ void initGame(std::string lport) {
 	game.mgr = pBoardManager;
 	game.board = pBoardManager->getBoard();
 
-	game.localPort = atoi(lport.c_str());
+	game.localPort = (uint16_t)2500;
 
 	game.mgr->updateGameState();
 

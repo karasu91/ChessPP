@@ -129,54 +129,25 @@ void Engine::setCurrentPlayer(Player* player)
 	_currentPlayer = player;
 }
 
-void Engine::initializeMultiplayer(Player* player) {
+bool Engine::initializeMultiplayer(Player* player) {
 
-	_localPlayer = player;
 
-//	if (_localPlayer->getColor() == Colors::WHITE)
-//	{
-//		_currentPlayer = _localPlayer;
-//			// Initialize TCP/IP network stack
-//		_srv = new Server();
-//		_srv->localPort = localPort;
-//		if (_srv->initialize() == false) {
-//			std::cout << "Failed to initialize tcp/ip server" << std::endl;
-//			return;
-//		}
-//
-//		_cli = new Client();
-//		_cli->targetPort = targetPort;
-//		if (_cli->connectServer(targetIp) == false)
-//		{
-//			std::cout << "Failed to initialize tcp/ip client"  << std::endl;
-//			return;
-//		}
-//	}
 
-	 // This else clause is for localhost simulation since the server/client do not work truly in parallel
-//	else
+	// Initialize TCP/IP network stack
+	std::cout << "Started initializing websocket server.." << std::endl;
+	_srv = new NetServer();
+	std::printf("Debug\n");
 	
-	//{
-	//	std::cout << "Initializing client..." << std::endl;
-	//	_currentPlayer = player->getOpponent();
-	//	_cli = new Client();
-	//	_cli->targetPort = targetPort;
-	//	if (_cli->connectServer(targetIp) == false)
-	//	{
-	//		std::cout << "Failed to initialize tcp/ip client" << std::endl;
-	//		return;
-	//	}
+	_srv->set_port(localPort);
 
-		// Initialize TCP/IP network stack
-		std::cout << "initializing TCP/IP..." << std::endl;
-		_srv = new NetServer();
-		_srv->localPort = localPort;
-		if (_srv->initialize() == false) {
-			std::cout << "Failed to initialize tcp/ip server"  << std::endl;
-			return;
-		}
-	
+	std::printf("Debug2\n");
+	if (_srv->initialize() == false) {
+		std::cout << "Failed to initialize tcp/ip server"  << std::endl;
+		return false;
+	}
+	_srv->run();
 
+	return true;
 }
 
 void Engine::swapTurn() {
@@ -233,19 +204,19 @@ void Engine::run() {
 			std::this_thread::sleep_for(std::chrono::milliseconds(autoPlayDelayMs));
 
 			// Wait for data from player
-			std::string rcvData(_srv->receiveData());
-			if (rcvData == "err")
+			std::string data(_srv->receive_data());
+			if (data == "err")
 			{
-				std::cout << "error reading rcvData input. exiting." << std::endl;
+				std::cout << "error reading data input. exiting." << std::endl;
 				break;
 			}
 
-			std::string delim = "->";
+			std::string dlm = "->";
 			std::vector<std::string> moves;
-			moves = split(rcvData, delim);
+			moves = split(data, dlm);
 			if (moves.size() < 2) {
-				_srv->sendData("Data faulty! Try again.");
-				rcvData = "";
+				_srv->send_data("Data faulty! Try again.");
+				data = "";
 				continue;
 			}
 
@@ -257,6 +228,6 @@ void Engine::run() {
 
 	std::cout << "Cleaning up..." << std::endl;
 	delete _srv;
-	delete _cli;
+	//delete _cli;
 }
 

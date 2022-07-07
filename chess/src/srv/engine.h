@@ -35,18 +35,19 @@ public:
 	bool playMove(std::string start, std::string end);
 	bool playMove(Coordinates start, Coordinates end);
 
-	void initializeMultiplayer(Player* localPlayer);
+	bool initializeMultiplayer(Player* localPlayer);
 	void setCurrentPlayer(Player* player);
 
 	void run(void);
 
-	uint localPort;
-	uint targetPort;
+	uint16_t localPort;
+	uint16_t targetPort;
+	
 	std::string targetIp;
 	
 private:
 	NetServer* _srv;
-	NetClient* _cli;
+	//NetClient* _cli;
 
 	Player* _currentPlayer = NULL;
 	Player* _localPlayer = NULL;

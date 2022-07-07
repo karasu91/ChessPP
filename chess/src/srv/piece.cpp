@@ -1,6 +1,7 @@
 
 #include "piece.h"
 #include <memory>
+#include <algorithm>
 
 Piece::Piece(Colors color, PieceType type, Coordinates coordinates) {
 

@@ -124,7 +124,7 @@ void Boardman::upgradePawnCheck(std::shared_ptr<Piece> pawn) {
 
 void Boardman::updateGameState() {
 
-	printBoard(_board);
+	//printBoard(_board);
 	std::cout << "Updating game state..." << std::endl;
 	auto players = getPlayers();
 
@@ -898,7 +898,7 @@ Coordinates Boardman::handleSelection()
         default:
             break;
         }
-		printBoard(_board);
+		//printBoard(_board);
     }
 }
 
